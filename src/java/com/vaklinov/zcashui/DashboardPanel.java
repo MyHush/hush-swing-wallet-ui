@@ -125,7 +125,7 @@ public class DashboardPanel
 		JLabel zcLabel = new JLabel("dash Wallet        ");
 		zcLabel.setFont(new Font("Helvetica", Font.BOLD | Font.ITALIC, 32));
 		tempPanel.add(zcLabel);
-		tempPanel.setToolTipText("Powered by ZCash\u00AE");
+		//tempPanel.setToolTipText("Powered by ZCash\u00AE");
 		balanceStatusPanel.add(tempPanel, BorderLayout.WEST);
 				
 		JLabel transactionHeadingLabel = new JLabel(
