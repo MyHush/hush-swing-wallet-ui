@@ -108,7 +108,8 @@ public class TransactionTable
         
 		JMenuItem showInExplorer = new JMenuItem("Show in block explorer");
 		showInExplorer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, accelaratorKeyMask));
-        popupMenu.add(showInExplorer);
+		// TODO: The Zdash block explorer seems not to support URLs with transaction ID?!
+        //popupMenu.add(showInExplorer);
         
         showInExplorer.addActionListener(new ActionListener() 
         {	

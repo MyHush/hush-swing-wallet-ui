@@ -5,6 +5,8 @@
 This program provides a Graphical User Interface (GUI) for the Zdash client tools that acts as a wrapper and 
 presents the information in a user-friendly manner.
 
+![Screenshot](https://github.com/vaklinov/zdash-swing-wallet-ui/raw/master/docs/ZdashWallet.png "Main Window")
+
 
 ## Building, installing and running the Wallet GUI
 
@@ -78,6 +80,14 @@ The details of how to build it are described below (easy to follow).
    If you are using Ubuntu (or similar ;) Linux you may instead just use the file manager and 
    right-click on the `ZDashSwingWalletUI.jar` file and choose the option "Open with OpenJDK 8 Runtime". 
    This will start the Zdash GUI wallet.
+   
+   **Important: ** the Zdash configuration file `~/.zdash/zdash.conf` needs to be correctly set up for the GUI
+    wallet to work. Specifically the RPC user and password need to be set in it like:
+    ```
+    rpcuser=username
+    rpcpassword=wjQOHVDQFLwztWp1Ehs098LKJHAXjd4E
+    
+    ``` 
 
 ### Donations accepted
 At the present time this project is non-commercial in nature and developed by volunteers. If you find the GUI

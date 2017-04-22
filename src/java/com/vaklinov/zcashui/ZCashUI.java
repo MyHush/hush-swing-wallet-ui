@@ -55,7 +55,6 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.plaf.FontUIResource;
 
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 import com.vaklinov.zcashui.ZCashClientCaller.NetworkAndBlockchainInfo;
@@ -98,7 +97,7 @@ public class ZCashUI
     public ZCashUI(StartupProgressDialog progressDialog)
         throws IOException, InterruptedException, WalletCallException
     {
-        super("Zdash Swing Wallet UI 0.68 (beta)");
+        super("Zdash Swing Wallet UI 0.68.1 (beta)");
         
         if (progressDialog != null)
         {
