@@ -122,7 +122,7 @@ public class DashboardPanel
 			this.getClass().getClassLoader().getResource("images/zcash-logo-square3.png")));
 		tempPanel.add(logoLabel);
 		//tempPanel.add(new JLabel(" "));
-		JLabel zcLabel = new JLabel("dash Wallet        ");
+		JLabel zcLabel = new JLabel("HUSH Wallet       ");
 		zcLabel.setFont(new Font("Helvetica", Font.BOLD | Font.ITALIC, 32));
 		tempPanel.add(zcLabel);
 		//tempPanel.setToolTipText("Powered by ZCash\u00AE");
@@ -515,11 +515,11 @@ public class DashboardPanel
 		String text =
 			"<html>" + 
 		    "<span style=\"font-family:monospace;font-size:8.9px;" + color1 + "\">Transparent balance: <span style=\"font-size:9px\">" + 
-				transparentUCBalance + " Zdash </span></span><br/> " +
+				transparentUCBalance + " HUSH </span></span><br/> " +
 			"<span style=\"font-family:monospace;font-size:8.9px;" + color2 + "\">Private (Z) balance: <span style=\"font-weight:bold;font-size:9px\">" + 
-		    	privateUCBalance + " Zdash </span></span><br/> " +
+		    	privateUCBalance + " HUSH </span></span><br/> " +
 			"<span style=\"font-family:monospace;font-size:8.9px;" + color3 + "\">Total (Z+T) balance: <span style=\"font-weight:bold;font-size:11.5px;\">" + 
-		    	totalUCBalance + " Zdash </span></span>" +
+		    	totalUCBalance + " HUSH </span></span>" +
 			"<br/>  </html>";
 		
 		this.walletBalanceLabel.setText(text);
@@ -533,9 +533,9 @@ public class DashboardPanel
 					  "Unconfirmed (unspendable) balance is being shown due to an<br/>" + 
 		              "ongoing transaction! Actual confirmed (spendable) balance is:<br/>" +
 		              "<span style=\"font-size:5px\"><br/></span>" +
-					  "Transparent: " + transparentBalance + " Zdash<br/>" +
-		              "Private ( Z ): <span style=\"font-weight:bold\">" + privateBalance + " Zdash</span><br/>" +
-					  "Total ( Z+T ): <span style=\"font-weight:bold\">" + totalBalance + " Zdash</span>" +
+					  "Transparent: " + transparentBalance + " HUSH<br/>" +
+		              "Private ( Z ): <span style=\"font-weight:bold\">" + privateBalance + " HUSH</span><br/>" +
+					  "Total ( Z+T ): <span style=\"font-weight:bold\">" + totalBalance + " HUSH</span>" +
 					  "</html>";
 		}
 		

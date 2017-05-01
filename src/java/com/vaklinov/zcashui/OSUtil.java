@@ -135,7 +135,7 @@ public class OSUtil
 	{
 		// TODO: this way of finding the dir is JAR name dependent - tricky, may not work
 		// if program is repackaged as different JAR!
-		final String JAR_NAME = "ZDashSwingWalletUI.jar";
+		final String JAR_NAME = "HUSHSwingWalletUI.jar";
 		String cp = System.getProperty("java.class.path");
 		if ((cp != null) && (cp.indexOf(File.pathSeparator) == -1) &&
 			(cp.endsWith(JAR_NAME)))
@@ -201,13 +201,13 @@ public class OSUtil
 	    
 	    if (os == OS_TYPE.MAC_OS)
 	    {
-	        dir = new File(userHome, "Library/Application Support/ZdashSwingWalletUI");
+	        dir = new File(userHome, "Library/Application Support/HUSHSwingWalletUI");
 	    } else if (os == OS_TYPE.WINDOWS)
 		{
-			dir = new File(System.getenv("LOCALAPPDATA") + "\\ZdashSwingWalletUI");
+			dir = new File(System.getenv("LOCALAPPDATA") + "\\HUSHSwingWalletUI");
 		} else
 	    {
-	        dir = new File(userHome.getCanonicalPath() + File.separator + ".ZdashSwingWalletUI");
+	        dir = new File(userHome.getCanonicalPath() + File.separator + ".HUSHSwingWalletUI");
 	    }
 	    
 		if (!dir.exists())
@@ -252,6 +252,7 @@ public class OSUtil
 	    File f;
 	    
 	    // Try with system property zcash.location.dir - may be specified by caller
+	    // TODO: HUSH directories!
 	    String ZCashLocationDir = System.getProperty("zdash.location.dir");
 	    if ((ZCashLocationDir != null) && (ZCashLocationDir.trim().length() > 0))
 	    {
@@ -269,6 +270,7 @@ public class OSUtil
 	    	// The following search directories apply to UNIX-like systems only
 			final String dirs[] = new String[]
 			{
+			    // TODO: HUSH directories!
 				"/usr/bin/", // Typical Ubuntu
 				"/bin/",
 				"/usr/local/bin/",

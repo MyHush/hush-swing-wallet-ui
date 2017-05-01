@@ -108,7 +108,7 @@ public class TransactionTable
         
 		JMenuItem showInExplorer = new JMenuItem("Show in block explorer");
 		showInExplorer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, accelaratorKeyMask));
-		// TODO: The Zdash block explorer seems not to support URLs with transaction ID?!
+		// TODO: The HUSH block explorer seems not to support URLs with transaction ID?!
         //popupMenu.add(showInExplorer);
         
         showInExplorer.addActionListener(new ActionListener() 
@@ -125,7 +125,7 @@ public class TransactionTable
 					
 				        JOptionPane.showMessageDialog(
 					            parent,
-					            "Zdash block explorer is unknown...",
+					            "HUSH block explorer is unknown...",
 					            "TODO:",
 					            JOptionPane.ERROR_MESSAGE);
 						
@@ -239,7 +239,7 @@ public class TransactionTable
 			JLabel infoLabel = new JLabel(
 					"<html><span style=\"font-size:9px;\">" +
 					"The table shows the information about the transaction with technical details as " +
-					"they appear at Zdash network level." +
+					"they appear at HUSH network level." +
 				    "</span>");
 			infoLabel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
 			tempPanel.add(infoLabel, BorderLayout.CENTER);

@@ -127,7 +127,7 @@ public class ZCashClientCaller
 		if (zcashd == null || (!zcashd.exists()))
 		{
 		    throw new IOException(
-		    	"The Zdash command line utility " + zcashcli.getCanonicalPath() + 
+		    	"The HUSH command line utility " + zcashcli.getCanonicalPath() + 
 		    	" was found, but zcashd was not found!");
 		}
 	}

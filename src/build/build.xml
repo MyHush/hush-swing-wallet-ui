@@ -27,7 +27,7 @@
  * THE SOFTWARE.                                    
  *
 -->
-<project name="ZDashSwingWalletUI" basedir="../.." default="buildit">
+<project name="HUSHSwingWalletUI" basedir="../.." default="buildit">
 	
     <property name="src.dir"     value="src"/>
     <property name="build.dir"   value="build"/>
