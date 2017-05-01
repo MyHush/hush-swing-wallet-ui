@@ -1,15 +1,15 @@
-# [HUSH <formerly Zdash>](https://zdash.io/) Desktop GUI Wallet
+# [HUSH (formerly Zdash)](https://zdash.io/) Desktop GUI Wallet
 
-## Graphical user interface wrapper for the [HUSH <formerly Zdash>)](https://zdash.io/) command line tools
+## Graphical user interface wrapper for the [HUSH (formerly Zdash)](https://zdash.io/) command line tools
 
-This program provides a Graphical User Interface (GUI) for the HUSH <formerly Zdash> client tools that acts as a wrapper and presents the information in a user-friendly manner.
+This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zdash) client tools that acts as a wrapper and presents the information in a user-friendly manner.
 
 ![Screenshot](https://github.com/vaklinov/hush-swing-wallet-ui/raw/master/docs/HUSHWallet.png "Main Window")
 
 
 ## Building, installing and running the Wallet GUI
 
-Before installing the Desktop GUI Wallet you need to have HUSH up and running. The following [guide](https://github.com/J-Stuhlman/zdash/blob/master/README.md) explains how to set up [HUSH <formerly Zdash>](https://zdash.io/). 
+Before installing the Desktop GUI Wallet you need to have HUSH up and running. The following [guide](https://github.com/J-Stuhlman/zdash/blob/master/README.md) explains how to set up [HUSH (formerly Zdash)](https://zdash.io/). 
 
 **For security reasons it is recommended to always build the GUI wallet program from GitHub**
 **[source](https://github.com/vaklinov/hush-swing-wallet-ui/archive/master.zip).**
