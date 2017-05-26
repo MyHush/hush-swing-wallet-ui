@@ -36,7 +36,7 @@ public class ProvingKeyFetcher {
         try {
             verifyOrFetch(parent);
         } catch (InterruptedIOException iox) {
-            JOptionPane.showMessageDialog(parent, "Zcash cannot proceed without a proving key.");
+            JOptionPane.showMessageDialog(parent, "HUSH cannot proceed without a proving key.");
             System.exit(-3);
         }
     }
@@ -75,7 +75,7 @@ public class ProvingKeyFetcher {
             return;
         }
         
-        JOptionPane.showMessageDialog(parent, "Zcash needs to download a large file.  This will happen only once.\n  "
+        JOptionPane.showMessageDialog(parent, "HUSH needs to download a large file.  This will happen only once.\n  "
                 + "Please be patient.  Press OK to continue");
         
         parent.setProgressText("Downloading proving key...");
