@@ -79,13 +79,14 @@ public class StartupProgressDialog extends JFrame {
     public void waitForStartup() throws IOException,
         InterruptedException,WalletCallException,InvocationTargetException {
         
-        // special handling of OSX app bundle
-//        if (OSUtil.getOSType() == OS_TYPE.MAC_OS) {
-//            ProvingKeyFetcher keyFetcher = new ProvingKeyFetcher();
-//            keyFetcher.fetchIfMissing(this);
-//            if ("true".equalsIgnoreCase(System.getProperty("launching.from.appbundle")))
-//                performOSXBundleLaunch();
-//        }
+        // special handling of Windows app launch
+        if (OSUtil.getOSType() == OS_TYPE.WINDOWS) 
+        {
+            ProvingKeyFetcher keyFetcher = new ProvingKeyFetcher();
+            keyFetcher.fetchIfMissing(this);
+            if ("true".equalsIgnoreCase(System.getProperty("launching.from.appbundle")))
+                performWinBundleLaunch();
+        }
         
         System.out.println("Splash: checking if zcashd is already running...");
         boolean shouldStartZCashd = false;
@@ -209,16 +210,22 @@ public class StartupProgressDialog extends JFrame {
 	     });
     }
     
-    // TODO: Unused for now
-    private void performOSXBundleLaunch() throws IOException, InterruptedException {
-        System.out.println("performing OSX Bundle-specific launch");
-        File bundlePath = new File(System.getProperty("zcash.location.dir"));
+
+    private void performWinBundleLaunch() throws IOException, InterruptedException 
+    {
+        System.out.println("performing Win Bundle-specific launch");
+        String programFiles = System.getenv("PROGRAMFILES");
+        File pf = new File(programFiles);
+        File bundlePath = new File(pf, "zcash4win/app");
         bundlePath = bundlePath.getCanonicalFile();
         
-        // run "first-run.sh"
-        File firstRun = new File(bundlePath,"first-run.sh");
-        Process firstRunProcess = Runtime.getRuntime().exec(firstRun.getCanonicalPath());
-        firstRunProcess.waitFor();
+        // run "first-run.bat"
+        File firstRun = new File(bundlePath,"first-run.bat");
+        if (firstRun.exists())
+        {
+        	Process firstRunProcess = Runtime.getRuntime().exec(firstRun.getCanonicalPath());
+        	firstRunProcess.waitFor();
+        }
     }
     
     

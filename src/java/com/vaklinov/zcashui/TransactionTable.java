@@ -122,16 +122,10 @@ public class TransactionTable
 					{
 						String txID = TransactionTable.this.getModel().getValueAt(lastRow, 6).toString();
 						txID = txID.replaceAll("\"", ""); // In case it has quotes
-					
-				        JOptionPane.showMessageDialog(
-					            parent,
-					            "HUSH block explorer is unknown...",
-					            "TODO:",
-					            JOptionPane.ERROR_MESSAGE);
-						
+											
 						System.out.println("Transaction ID for block explorer is: " + txID);
 						Desktop.getDesktop().browse(
-							new URL("https://zeroexplorer.com/?tx=" + txID).toURI());
+							new URL("http://explorer.myhush.org/tx/" + txID).toURI());
 					} catch (Exception ex)
 					{
 						ex.printStackTrace();
