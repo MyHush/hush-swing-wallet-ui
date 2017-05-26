@@ -216,7 +216,7 @@ public class StartupProgressDialog extends JFrame {
         System.out.println("performing Win Bundle-specific launch");
         String programFiles = System.getenv("PROGRAMFILES");
         File pf = new File(programFiles);
-        File bundlePath = new File(pf, "zcash4win/app");
+        File bundlePath = new File(pf, "hush4win/app");
         bundlePath = bundlePath.getCanonicalFile();
         
         // run "first-run.bat"
