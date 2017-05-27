@@ -40,7 +40,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
@@ -97,7 +99,7 @@ public class ZCashUI
     public ZCashUI(StartupProgressDialog progressDialog)
         throws IOException, InterruptedException, WalletCallException
     {
-        super("HUSH Swing Wallet UI 0.68.2 (beta)");
+        super("HUSH Swing Wallet UI 0.68.3 (beta)");
         
         if (progressDialog != null)
         {
@@ -362,9 +364,17 @@ public class ZCashUI
     public static void main(String argv[])
         throws IOException
     {
+    	
+    	
         try
         {
         	OS_TYPE os = OSUtil.getOSType();
+        	
+        	// On Windows/Mac we log to a file only! - users typically do not use consoles
+        	if ((os == OS_TYPE.WINDOWS) || (os == OS_TYPE.MAC_OS))
+        	{
+        		redirectLoggingToFile();
+        	}
         	
             System.out.println("Starting HUSH Swing Wallet ...");
             System.out.println("OS: " + System.getProperty("os.name") + " = " + os);
@@ -492,5 +502,28 @@ public class ZCashUI
                 JOptionPane.ERROR_MESSAGE);
             System.exit(3);
         }
+    }
+    
+    
+    public static void redirectLoggingToFile()
+    	throws IOException
+    {
+		// Initialize log to a file
+		String settingsDir = OSUtil.getSettingsDirectory();
+		Date today = new Date();
+		String logFile = settingsDir + File.separator + 
+				         "HUSHWallet_" +
+				         (int)(today.getYear() + 1900) + "_" +
+				         (int)(today.getMonth() + 1) + "_" +
+				         "debug.log";
+		PrintStream fileOut = new PrintStream(new FileOutputStream(logFile, true));
+		
+		fileOut.println("=================================================================================");
+		fileOut.println("= New log started at: " + today.toString());
+		fileOut.println("=================================================================================");
+		fileOut.println("");
+		
+		System.setOut(fileOut);
+		System.setErr(fileOut);
     }
 }
