@@ -82,7 +82,7 @@ The details of how to build it are described below (easy to follow).
    right-click on the `HUSHSwingWalletUI.jar` file and choose the option "Open with OpenJDK 8 Runtime". 
    This will start the HUSH GUI wallet.
    
-   **Important:** the HUSH configuration file `~/.zdash/zdash.conf` needs to be correctly set up for the GUI
+   **Important:** the HUSH configuration file `~/.hush/hush.conf` needs to be correctly set up for the GUI
     wallet to work. Specifically the RPC user and password need to be set in it like:
     ```
     rpcuser=username
