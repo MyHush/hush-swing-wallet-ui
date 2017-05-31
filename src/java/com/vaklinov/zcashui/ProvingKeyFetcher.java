@@ -46,8 +46,8 @@ public class ProvingKeyFetcher {
         zCashParams = zCashParams.getCanonicalFile();
         
         boolean needsFetch = false;
-        if (!zCashParams.exists()) {
-            
+        if (!zCashParams.exists()) 
+        {    
             needsFetch = true;
             zCashParams.mkdirs();
         }
@@ -62,21 +62,31 @@ public class ProvingKeyFetcher {
         
         File provingKeyFile = new File(zCashParams,"sprout-proving.key");
         provingKeyFile = provingKeyFile.getCanonicalFile();
-        if (!provingKeyFile.exists()) {
+        if (!provingKeyFile.exists()) 
+        {
             needsFetch = true;
-        } else if (provingKeyFile.length() != PROVING_KEY_SIZE) {
+        } else if (provingKeyFile.length() != PROVING_KEY_SIZE) 
+        {
             needsFetch = true;
-        } else {
+        } 
+        /*
+         * We skip proving key verification every start - this is impractical.
+         * If the proving key exists and is the correct size, then it should be OK.
+        else 
+        {
             parent.setProgressText("Verifying proving key...");
             needsFetch = !checkSHA256(provingKeyFile,parent);
-        }
+        }*/
         
-        if (!needsFetch) {
+        if (!needsFetch) 
+        {
             return;
         }
         
-        JOptionPane.showMessageDialog(parent, "HUSH needs to download a large file.  This will happen only once.\n  "
-                + "Please be patient.  Press OK to continue");
+        JOptionPane.showMessageDialog(
+        	parent, 
+        	"The wallet needs to download the Z cryptographic proving key (approx. 900 MB).\n" + 
+        	"This will be done only once. Please be patient... Press OK to continue");
         
         parent.setProgressText("Downloading proving key...");
         provingKeyFile.delete();
