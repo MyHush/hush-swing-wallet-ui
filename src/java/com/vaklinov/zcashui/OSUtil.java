@@ -102,7 +102,7 @@ public class OSUtil
 	// Returns the name of the zcashd server - may vary depending on the OS.
 	public static String getZCashd()
 	{
-		String zcashd = "zcashd";
+		String zcashd = "hushd";
 		
 		OS_TYPE os = getOSType();
 		if (os == OS_TYPE.WINDOWS)
@@ -117,7 +117,7 @@ public class OSUtil
 	// Returns the name of the zcash-cli tool - may vary depending on the OS.
 	public static String getZCashCli()
 	{
-		String zcashcli = "zcash-cli";
+		String zcashcli = "hush-cli";
 		
 		OS_TYPE os = getOSType();
 		if (os == OS_TYPE.WINDOWS)
