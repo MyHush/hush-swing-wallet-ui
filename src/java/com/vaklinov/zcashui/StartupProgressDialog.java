@@ -54,14 +54,14 @@ public class StartupProgressDialog extends JFrame {
         URL iconUrl = this.getClass().getClassLoader().getResource("images/zdash.png");
         imageIcon = new ImageIcon(iconUrl);
         imageLabel.setIcon(imageIcon);
-        imageLabel.setBorder(BorderFactory.createEmptyBorder(16, 16, 0, 16));
+        imageLabel.setBorder(BorderFactory.createEmptyBorder(32, 32, 0, 32));
         Container contentPane = getContentPane();
         contentPane.setLayout(borderLayout1);
         southPanel.setLayout(southPanelLayout);
         southPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 16, 16));
         contentPane.add(imageLabel, BorderLayout.NORTH);
 		JLabel zcashWalletLabel = new JLabel(
-			"<html><span style=\"font-style:italic;font-weight:bold;font-size:22px\">" + 
+			"<html><span style=\"font-style:italic;font-weight:bold;font-size:24px\">" + 
 		    "HUSH Wallet UI</span></html>");
 		zcashWalletLabel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 		contentPane.add(zcashWalletLabel, BorderLayout.CENTER);

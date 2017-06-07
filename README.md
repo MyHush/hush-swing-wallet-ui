@@ -62,16 +62,16 @@ The details of how to build it are described below (easy to follow).
   3.1. If you have built HUSH from source code:
 
    Assuming you have already built it from source code in directory `/home/user/hush/src` (for 
-   example - this is the typical build dir. for HUSH v1.0.8) which contains the command line tools `zcash-cli` 
-   and `zcashd` you need to take the created file `./build/jars/HUSHSwingWalletUI.jar` and copy it 
-   to directory `/home/user/hush/src` (the same dir. that contains `zcash-cli` and `zcashd`). Example copy command:
+   example - this is the typical build dir. for HUSH v1.0.8) which contains the command line tools `hush-cli` 
+   and `hushd` you need to take the created file `./build/jars/HUSHSwingWalletUI.jar` and copy it 
+   to directory `/home/user/hush/src` (the same dir. that contains `hush-cli` and `hushd`). Example copy command:
    ```
    user@ubuntu:~/build-dir/hush-swing-wallet-ui$ cp ./build/jars/HUSHSwingWalletUI.jar /home/user/hush/src    
    ```
 
 4. Running the installed HUSH GUI wallet
 
-   Before running the GUI you need to start zcashd (e.g. `zcashd --daemon`). The wallet GUI is a Java program packaged 
+   Before running the GUI you need to start hushd (e.g. `hushd --daemon`). The wallet GUI is a Java program packaged 
    as an executable JAR file. It may be run from command line or started from another GUI tool (e.g. file manager). 
    Assuming you have already installed HUSH and the GUI Wallet `HUSHSwingWalletUI.jar` in 
    directory `/home/user/hush/src` one way to run it from command line is:
