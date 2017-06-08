@@ -434,7 +434,7 @@ public class ZCashUI
                 if ((wce.getMessage().indexOf("{\"code\":-28") != -1) || // Started but not ready
                 	(wce.getMessage().indexOf("error code: -28") != -1))
                 {
-                	System.out.println("zcashd is currently starting...");
+                	System.out.println("hushd is currently starting...");
                 	daemonStartInProgress = true;
                 }
             }
@@ -443,7 +443,7 @@ public class ZCashUI
             if ((zcashdInfo.status != DAEMON_STATUS.RUNNING) || (daemonStartInProgress))
             {
             	System.out.println(
-            		"zcashd is not runing at the moment or has not started/synchronized 100% - showing splash...");
+            		"hushd is not runing at the moment or has not started/synchronized 100% - showing splash...");
 	            startupBar = new StartupProgressDialog(initialClientCaller);
 	            startupBar.setVisible(true);
 	            startupBar.waitForStartup();
@@ -485,7 +485,7 @@ public class ZCashUI
                     null,
                     "There was a problem communicating with the HUSH daemon/wallet. \n" +
                     "Please ensure that the HUSH server zcashd is started (e.g. via \n" + 
-                    "command  \"zcashd --daemon\"). Error message is: \n" +
+                    "command  \"hushd --daemon\"). Error message is: \n" +
                      wce.getMessage() +
                     "See the console output for more detailed error information!",
                     "Wallet communication error",

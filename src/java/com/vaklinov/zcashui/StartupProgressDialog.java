@@ -176,12 +176,12 @@ public class StartupProgressDialog extends JFrame {
 	                }
 	            
 	                if (StartupProgressDialog.this.isAlive(daemonProcess)) {
-	                    	System.out.println("zcashd is still alive although we tried to stop it. " +
+	                    	System.out.println("hushd is still alive although we tried to stop it. " +
 	                                           "Hopefully it will stop later!");
-	                        //System.out.println("zcashd is still alive, killing forcefully");
+	                        //System.out.println("hushd is still alive, killing forcefully");
 	                        //daemonProcess.destroyForcibly();
 	                    } else
-	                        System.out.println("zcashd shut down successfully");
+	                        System.out.println("hushd shut down successfully");
                 } catch (Exception bad) {
                     System.out.println("Couldn't stop zcashd!");
                     bad.printStackTrace();
