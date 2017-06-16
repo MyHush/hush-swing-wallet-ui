@@ -1,17 +1,17 @@
-# [HUSH (formerly Zdash)](https://myhush.org/) Desktop GUI Wallet
+# [HUSH](https://myhush.org/) Desktop GUI Wallet
 
 ## Graphical user interface wrapper for the [HUSH (formerly Zdash)](https://myhush.org/) command line tools
 
 This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zdash) client tools that acts as a wrapper and presents the information in a user-friendly manner.
 
-![Screenshot](https://github.com/vaklinov/hush-swing-wallet-ui/raw/master/docs/HUSHWallet.png "Main Window")
+![Screenshot](docs/HUSHWallet.png "Main Window")
 
 #### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/vaklinov/hush-swing-wallet-ui/releases/tag/0.68.3-beta) is available
 
 
 ## Building, installing and running the Wallet GUI
 
-Before installing the Desktop GUI Wallet you need to have HUSH up and running. The following [guide](https://github.com/J-Stuhlman/zdash/blob/master/README.md) explains how to set up [HUSH (formerly Zdash)](https://myhush.org/). 
+Before installing the Desktop GUI Wallet you need to have HUSH up and running. The following [guide](https://github.com/MyHush/hush/blob/master/README.md) explains how to set up [HUSH (formerly Zdash)](https://myhush.org/). 
 
 **For security reasons it is recommended to always build the GUI wallet program from GitHub**
 **[source](https://github.com/vaklinov/hush-swing-wallet-ui/archive/master.zip).**
@@ -19,7 +19,7 @@ The details of how to build it are described below (easy to follow).
 
 1. Operating system and tools
 
-   As of May 2017 (HUSH v1.0.8) this program is mostly tested on Linux. The Linux tools you need 
+   As of May 2017 (HUSH v1.0.9) this program is mostly tested on Linux. The Linux tools you need 
    to build and run the Wallet GUI are Git, Java (JDK7 or later) and Ant. If using Ubuntu Linux, 
    they may be installed via command: 
    ```
