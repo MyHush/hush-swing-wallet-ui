@@ -88,7 +88,7 @@ public class StartupProgressDialog extends JFrame {
                 performWinBundleLaunch();
         }
         
-        System.out.println("Splash: checking if zcashd is already running...");
+        System.out.println("Splash: checking if hushd is already running...");
         boolean shouldStartZCashd = false;
         try {
             clientCaller.getDaemonRawRuntimeInfo();
@@ -103,13 +103,13 @@ public class StartupProgressDialog extends JFrame {
         }
         
         if (!shouldStartZCashd) {
-            System.out.println("Splash: zcashd already running...");
+            System.out.println("Splash: hushd already running...");
             // What if started by hand but taking long to initialize???
 //            doDispose();
 //            return;
         } else
         {
-        	System.out.println("Splash: zcashd will be started...");
+        	System.out.println("Splash: hushd will be started...");
         }
         
         final Process daemonProcess = 
@@ -151,7 +151,7 @@ public class StartupProgressDialog extends JFrame {
         if (daemonProcess != null) // Shutdown only if we started it
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
-                System.out.println("Stopping zcashd because we started it - now it is alive: " + 
+                System.out.println("Stopping hushd because we started it - now it is alive: " + 
                 		           StartupProgressDialog.this.isAlive(daemonProcess));
                 try 
                 {
@@ -161,7 +161,7 @@ public class StartupProgressDialog extends JFrame {
 	                while (!StartupProgressDialog.this.waitFor(daemonProcess, 3000))
 	                {
 	                	long end = System.currentTimeMillis();
-	                	System.out.println("Waiting for " + ((end - start) / 1000) + " seconds for zcashd to exit...");
+	                	System.out.println("Waiting for " + ((end - start) / 1000) + " seconds for hushd to exit...");
 	                	
 	                	if (end - start > 10 * 1000)
 	                	{
@@ -183,7 +183,7 @@ public class StartupProgressDialog extends JFrame {
 	                    } else
 	                        System.out.println("hushd shut down successfully");
                 } catch (Exception bad) {
-                    System.out.println("Couldn't stop zcashd!");
+                    System.out.println("Couldn't stop hushd!");
                     bad.printStackTrace();
                 }
             }

@@ -100,7 +100,7 @@ public class ZCashUI
     public ZCashUI(StartupProgressDialog progressDialog)
         throws IOException, InterruptedException, WalletCallException
     {
-        super("HUSH Swing Wallet UI 0.68.4 (beta)");
+        super("HUSH Swing Wallet UI 0.68.5 (beta)");
         
         if (progressDialog != null)
         {
@@ -474,7 +474,7 @@ public class ZCashUI
             {
                 JOptionPane.showMessageDialog(
                         null,
-                        "It appears that zcashd has been started but is not ready to accept wallet\n" +
+                        "It appears that hushd has been started but is not ready to accept wallet\n" +
                         "connections. It is still loading the wallet and blockchain. Please try to \n" +
                         "start the GUI wallet later...",
                         "Wallet communication error",
@@ -484,7 +484,7 @@ public class ZCashUI
                 JOptionPane.showMessageDialog(
                     null,
                     "There was a problem communicating with the HUSH daemon/wallet. \n" +
-                    "Please ensure that the HUSH server zcashd is started (e.g. via \n" + 
+                    "Please ensure that the HUSH server hushd is started (e.g. via \n" + 
                     "command  \"hushd --daemon\"). Error message is: \n" +
                      wce.getMessage() +
                     "See the console output for more detailed error information!",
@@ -565,7 +565,7 @@ public class ZCashUI
 			configOut.println("# Creation date: " + new Date().toString());
 			configOut.println("#############################################################################");
 			configOut.println("");
-			configOut.println("# The rpcuser/rpcpassword are used for the local call to zcashd");
+			configOut.println("# The rpcuser/rpcpassword are used for the local call to hushd");
 			configOut.println("rpcuser=User" + Math.abs(r.nextInt()));
 			configOut.println("rpcpassword=Pass" + Math.abs(r.nextInt()) + "" + 
 			                                       Math.abs(r.nextInt()) + "" + 

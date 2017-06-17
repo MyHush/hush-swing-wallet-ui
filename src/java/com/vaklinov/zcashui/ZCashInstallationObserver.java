@@ -92,7 +92,7 @@ public class ZCashInstallationObserver
 		{
 			throw new InstallationDetectionException(
 				"The HUSH GUI Wallet installation directory " + installDir + " needs\nto contain " +
-				"the command line utilities zcashd and zcash-cli. At least one of them is missing! \n" +
+				"the command line utilities hushd and hush-cli. At least one of them is missing! \n" +
 				"Please place files HUSHSwingWalletUI.jar, " + OSUtil.getZCashCli() + ", " + 
 				OSUtil.getZCashd() + " in the same directory.");
 		}
@@ -253,7 +253,7 @@ public class ZCashInstallationObserver
 				} catch (NumberFormatException nfe)
 				{
 					info.residentSizeMB = 0;
-					System.out.println("Error: could not find the numeric memory size of zcashd: " + size);
+					System.out.println("Error: could not find the numeric memory size of hushd: " + size);
 				};
 				
 				break;
