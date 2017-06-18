@@ -1,17 +1,17 @@
-# [HUSH (formerly Zdash)](https://myhush.org/) Desktop GUI Wallet
+# [HUSH](https://myhush.org/) Desktop GUI Wallet
 
 ## Graphical user interface wrapper for the [HUSH (formerly Zdash)](https://myhush.org/) command line tools
 
 This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zdash) client tools that acts as a wrapper and presents the information in a user-friendly manner.
 
-![Screenshot](https://github.com/vaklinov/hush-swing-wallet-ui/raw/master/docs/HUSHWallet.png "Main Window")
+![Screenshot](docs/HUSHWallet.png "Main Window")
 
 #### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/vaklinov/hush-swing-wallet-ui/releases/tag/0.68.3-beta) is available
 
 
 ## Building, installing and running the Wallet GUI
 
-Before installing the Desktop GUI Wallet you need to have HUSH up and running. The following [guide](https://github.com/J-Stuhlman/zdash/blob/master/README.md) explains how to set up [HUSH (formerly Zdash)](https://myhush.org/). 
+Before installing the Desktop GUI Wallet you need to have HUSH up and running. The following [guide](https://github.com/MyHush/hush/blob/master/README.md) explains how to set up [HUSH (formerly Zdash)](https://myhush.org/). 
 
 **For security reasons it is recommended to always build the GUI wallet program from GitHub**
 **[source](https://github.com/vaklinov/hush-swing-wallet-ui/archive/master.zip).**
@@ -19,7 +19,7 @@ The details of how to build it are described below (easy to follow).
 
 1. Operating system and tools
 
-   As of May 2017 (HUSH v1.0.8) this program is mostly tested on Linux. The Linux tools you need 
+   As of May 2017 (HUSH v1.0.9) this program is mostly tested on Linux. The Linux tools you need 
    to build and run the Wallet GUI are Git, Java (JDK7 or later) and Ant. If using Ubuntu Linux, 
    they may be installed via command: 
    ```
@@ -62,16 +62,16 @@ The details of how to build it are described below (easy to follow).
   3.1. If you have built HUSH from source code:
 
    Assuming you have already built it from source code in directory `/home/user/hush/src` (for 
-   example - this is the typical build dir. for HUSH v1.0.8) which contains the command line tools `zcash-cli` 
-   and `zcashd` you need to take the created file `./build/jars/HUSHSwingWalletUI.jar` and copy it 
-   to directory `/home/user/hush/src` (the same dir. that contains `zcash-cli` and `zcashd`). Example copy command:
+   example - this is the typical build dir. for HUSH v1.0.8) which contains the command line tools `hush-cli` 
+   and `hushd` you need to take the created file `./build/jars/HUSHSwingWalletUI.jar` and copy it 
+   to directory `/home/user/hush/src` (the same dir. that contains `hush-cli` and `hushd`). Example copy command:
    ```
    user@ubuntu:~/build-dir/hush-swing-wallet-ui$ cp ./build/jars/HUSHSwingWalletUI.jar /home/user/hush/src    
    ```
 
 4. Running the installed HUSH GUI wallet
 
-   Before running the GUI you need to start zcashd (e.g. `zcashd --daemon`). The wallet GUI is a Java program packaged 
+   Before running the GUI you need to start hushd (e.g. `hushd --daemon`). The wallet GUI is a Java program packaged 
    as an executable JAR file. It may be run from command line or started from another GUI tool (e.g. file manager). 
    Assuming you have already installed HUSH and the GUI Wallet `HUSHSwingWalletUI.jar` in 
    directory `/home/user/hush/src` one way to run it from command line is:
@@ -82,7 +82,7 @@ The details of how to build it are described below (easy to follow).
    right-click on the `HUSHSwingWalletUI.jar` file and choose the option "Open with OpenJDK 8 Runtime". 
    This will start the HUSH GUI wallet.
    
-   **Important:** the HUSH configuration file `~/.zdash/zdash.conf` needs to be correctly set up for the GUI
+   **Important:** the HUSH configuration file `~/.hush/hush.conf` needs to be correctly set up for the GUI
     wallet to work. Specifically the RPC user and password need to be set in it like:
     ```
     rpcuser=username

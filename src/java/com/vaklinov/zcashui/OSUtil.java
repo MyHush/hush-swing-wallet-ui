@@ -102,7 +102,7 @@ public class OSUtil
 	// Returns the name of the zcashd server - may vary depending on the OS.
 	public static String getZCashd()
 	{
-		String zcashd = "zcashd";
+		String zcashd = "hushd";
 		
 		OS_TYPE os = getOSType();
 		if (os == OS_TYPE.WINDOWS)
@@ -117,7 +117,7 @@ public class OSUtil
 	// Returns the name of the zcash-cli tool - may vary depending on the OS.
 	public static String getZCashCli()
 	{
-		String zcashcli = "zcash-cli";
+		String zcashcli = "hush-cli";
 		
 		OS_TYPE os = getOSType();
 		if (os == OS_TYPE.WINDOWS)
@@ -180,13 +180,13 @@ public class OSUtil
 		
 		if (os == OS_TYPE.MAC_OS)
 		{
-			return new File(System.getProperty("user.home") + "/Library/Application Support/Zdash").getCanonicalPath();
+			return new File(System.getProperty("user.home") + "/Library/Application Support/Hush").getCanonicalPath();
 		} else if (os == OS_TYPE.WINDOWS)
 		{
-			return new File(System.getenv("APPDATA") + "\\Zdash").getCanonicalPath();
+			return new File(System.getenv("APPDATA") + "\\Hush").getCanonicalPath();
 		} else
 		{
-			return new File(System.getProperty("user.home") + "/.zdash").getCanonicalPath();
+			return new File(System.getProperty("user.home") + "/.hush").getCanonicalPath();
 		}
 	}
 
@@ -252,8 +252,7 @@ public class OSUtil
 	    File f;
 	    
 	    // Try with system property zcash.location.dir - may be specified by caller
-	    // TODO: HUSH directories!
-	    String ZCashLocationDir = System.getProperty("zdash.location.dir");
+	    String ZCashLocationDir = System.getProperty("hush.location.dir");
 	    if ((ZCashLocationDir != null) && (ZCashLocationDir.trim().length() > 0))
 	    {
 	        f = new File(ZCashLocationDir + File.separator + command);
@@ -274,11 +273,11 @@ public class OSUtil
 				"/usr/bin/", // Typical Ubuntu
 				"/bin/",
 				"/usr/local/bin/",
-				"/usr/local/zdash/bin/",
-				"/usr/lib/zdash/bin/",
+				"/usr/local/hush/bin/",
+				"/usr/lib/hush/bin/",
 				"/opt/local/bin/",
-				"/opt/local/zdash/bin/",
-				"/opt/zdash/bin/"
+				"/opt/local/hush/bin/",
+				"/opt/hush/bin/"
 			};
 	
 			for (String d : dirs)
@@ -299,7 +298,7 @@ public class OSUtil
 	    		File pf = new File(programFiles);
 	    		if (pf.exists() && pf.isDirectory())
 	    		{
-	    			File ZDir = new File(pf, "Zdash");
+	    			File ZDir = new File(pf, "Hush");
 	    			if (ZDir.exists() && ZDir.isDirectory())
 	    			{
 	    				File cf = new File(ZDir, command);

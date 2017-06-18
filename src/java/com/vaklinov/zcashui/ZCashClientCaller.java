@@ -115,7 +115,7 @@ public class ZCashClientCaller
 		{
 			throw new IOException(
 				"The ZCash installation directory " + installDir + " needs to contain " +
-				"the command line utilities zcashd and zcash-cli. zcash-cli is missing!");
+				"the command line utilities hushd and zcash-cli. zcash-cli is missing!");
 		}
 		
 		zcashd = new File(dir, OSUtil.getZCashd());
@@ -128,7 +128,7 @@ public class ZCashClientCaller
 		{
 		    throw new IOException(
 		    	"The HUSH command line utility " + zcashcli.getCanonicalPath() + 
-		    	" was found, but zcashd was not found!");
+		    	" was found, but hushd was not found!");
 		}
 	}
 
