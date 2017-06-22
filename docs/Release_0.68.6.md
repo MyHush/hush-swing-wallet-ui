@@ -3,7 +3,7 @@ It requires a 64-bit Windows 7 or later version to run. It also includes
 [HUSH 1.0.9 binaries](https://zcash.dl.mercerweiss.com/hush-win-v1.0.9.zip) by 
 [@radix42](https://github.com/radix42). 
 
-![Screenshot](docs/HUSHSwingWalletUIWin.png "Main Window")
+![Screenshot](HUSHSwingWalletUIWin.png "Main Window")
 
 ### Installing the HUSH Desktop GUI Wallet on Windows
 
