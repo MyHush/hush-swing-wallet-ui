@@ -1,3 +1,5 @@
+## [HUSH](https://myhush.org/) Desktop GUI Wallet binary release 0.68.6 for Windows
+
 This is a [HUSH](https://myhush.org/) Desktop GUI Wallet binary release 0.68.6 for Windows. 
 It requires a 64-bit Windows 7 or later version to run. It also includes 
 [HUSH 1.0.9 binaries](https://zcash.dl.mercerweiss.com/hush-win-v1.0.9.zip) by 
