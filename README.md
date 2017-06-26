@@ -6,7 +6,7 @@ This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zd
 
 ![Screenshot](docs/HUSHWallet.png "Main Window")
 
-#### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/vaklinov/hush-swing-wallet-ui/releases/tag/0.68.3-beta) is available
+#### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/vaklinov/hush-swing-wallet-ui/blob/master/docs/Release_0.68.6.md) is available
 
 
 ## Building, installing and running the Wallet GUI

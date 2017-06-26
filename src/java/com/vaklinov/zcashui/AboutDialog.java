@@ -61,7 +61,7 @@ public class AboutDialog
 		throws UnsupportedEncodingException
 	{
 		this.setTitle("About...");
-		this.setSize(600,  400);
+		this.setSize(600,  450);
 	    this.setLocation(100, 100);
 		this.setLocationRelativeTo(parent);
 		this.setModal(true);
