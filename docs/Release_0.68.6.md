@@ -10,7 +10,7 @@ It requires a 64-bit Windows 7 or later version to run. It also includes
 ### Installing the HUSH Desktop GUI Wallet on Windows
 
 1. Download the Wallet ZIP file 
-[HUSH_Wallet_0.68.6_Windows_release.zip](https://github.com/vaklinov/hush-swing-wallet-ui/releases/download/0.68.6/HUSH_Wallet_0.68.6_Windows_release.zip). 
+[HUSH_Wallet_0.68.6_Windows_release.zip](https://zcash.dl.mercerweiss.com/HUSH_Wallet_0.68.6_Windows_release.zip). 
 
 2. Security check: You may decide to run a virus scan on it, before proceeding... In addition using a tool 
 such as [http://quickhash-gui.org/](http://quickhash-gui.org/) you may calculate the its SHA256 checksum. The 
