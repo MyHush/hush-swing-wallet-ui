@@ -503,6 +503,17 @@ public class ZCashUI
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
             System.exit(3);
+        } catch (Error err)
+        {
+        	// Last resort catch for unexpected problems - just to inform the user
+            err.printStackTrace();
+            JOptionPane.showMessageDialog(
+                null,
+                "A general unexpected critical/unrecoverable error has occurred: \n" + err.getMessage() + "\n" +
+                "See the console output for more detailed error information!",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+            System.exit(4);
         }
     }
     
