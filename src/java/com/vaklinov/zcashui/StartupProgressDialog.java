@@ -133,7 +133,7 @@ public class StartupProgressDialog extends JFrame {
             }
             catch (IOException e)
             {
-                setProgressText("Waiting for daemon to start..." + Integer.toString(40 - iteration));
+                setProgressText("Waiting for daemon to start..." + Integer.toString(15 - iteration));
                 
                 // wait 15 - POLL_PERIOD (1.5sec) intervals before asking user to continue waiting...
             	if (iteration > 15)
