@@ -133,7 +133,10 @@ public class StartupProgressDialog extends JFrame {
             }
             catch (IOException e)
             {
-            	if (iteration > 40)
+                setProgressText("Waiting for daemon to start..." + Integer.toString(40 - iteration));
+                
+                // wait 15 - POLL_PERIOD (1.5sec) intervals before asking user to continue waiting...
+            	if (iteration > 15)
                 {
                     int dialogButton = JOptionPane.YES_NO_OPTION;
                     int dialogResult = JOptionPane.showConfirmDialog (null, "Daemon taking too long to start, continue waiting?","Warning",dialogButton);
