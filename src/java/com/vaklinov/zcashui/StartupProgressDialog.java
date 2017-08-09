@@ -8,6 +8,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
+import java.lang.Exception;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Locale;
@@ -76,7 +77,7 @@ public class StartupProgressDialog extends JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
     
-    public void waitForStartup() throws IOException,
+    public void waitForStartup() throws Exception, IOException,
         InterruptedException,WalletCallException,InvocationTargetException {
         
         // special handling of Windows app launch
@@ -131,11 +132,14 @@ public class StartupProgressDialog extends JFrame {
             {
             	if (iteration > 4)
             	{
-            		throw e;
-            	} else
-            	{
-            		continue;
+                    setProgressText("Waiting for daemon..." + Integer.toString((40-iteration)));
             	}
+                // wait at least 1 minute for daemon to start up
+                else if (iteration > 40)
+                {
+                    throw new Exception("Daemon failed to respond to getDaemonRawRuntimeInfo()", e);
+                }
+                continue;
             }
             
             JsonValue code = info.get("code");
