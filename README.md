@@ -6,6 +6,12 @@ This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zd
 
 ![Screenshot](docs/HUSHWallet.png "Main Window")
 
+### Security warning
+**Encryption of the `wallet.dat` file is not yet supported for HUSH. Using the wallet on a system infected**
+**with malware may result in wallet data/funds being stolen. Such cases have been reported! In addition the**
+**only way to have full assurance of the safety of running the node/wallet software is to compile it from**
+**source code and to inspect the code first.**
+
 #### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/vaklinov/hush-swing-wallet-ui/blob/master/docs/Release_0.68.6.md) is available
 
 
