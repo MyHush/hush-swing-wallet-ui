@@ -16,9 +16,9 @@ It requires a 64-bit Windows 7 or later version to run. It also includes
 such as [http://quickhash-gui.org/](http://quickhash-gui.org/) you may calculate the its SHA256 checksum. The 
 result should be:
 ```
-c633a6e4067e7bb7a9438c93621b8a2cfb5b5076ac2cda3401244128586a925e  HUSH_Wallet_0.68.6_Windows_release.zip
+369bbbeb5ce5327fc12532a1ae66f69f48b1bb3eb18e8bc7b6d11b34c8969cf3  HUSH_Wallet_0.68.6_Windows_release.zip
 ```
-**If the resulting checksum is not `c633a6e4067e7bb7a9438c93621b8a2cfb5b5076ac2cda3401244128586a925e` then**
+**If the resulting checksum is not `369bbbeb5ce5327fc12532a1ae66f69f48b1bb3eb18e8bc7b6d11b34c8969cf3` then**
 **something is wrong and you should discard the downloaded wallet!**
 
 3. Unzip the Wallet ZIP file HUSH_Wallet_0.68.6_Windows_release.zip in some directory that it will run from.
