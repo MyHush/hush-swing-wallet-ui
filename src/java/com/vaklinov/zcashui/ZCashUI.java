@@ -4,8 +4,9 @@
  *   / / |   / _` / __| '_ \\___ \ \ /\ / / | '_ \ / _` \ \ /\ / / _` | | |/ _ \ __| | | || |
  *  / /| |__| (_| \__ \ | | |___) \ V  V /| | | | | (_| |\ V  V / (_| | | |  __/ |_| |_| || |
  * /____\____\__,_|___/_| |_|____/ \_/\_/ |_|_| |_|\__, | \_/\_/ \__,_|_|_|\___|\__|\___/|___|
- *                                                 |___/
  *
+ *                                                 |___/
+ * Copyright (c) 2017 The Hush Developers
  * Copyright (c) 2016 Ivan Vaklinov <ivan@vaklinov.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -100,7 +101,7 @@ public class ZCashUI
     public ZCashUI(StartupProgressDialog progressDialog)
         throws IOException, InterruptedException, WalletCallException
     {
-        super("HUSH Swing Wallet UI 0.68.6 (beta)");
+        super("HUSH Wallet v0.70.0");
         
         if (progressDialog != null)
         {
@@ -317,7 +318,7 @@ public class ZCashUI
                     ZCashUI.this.getRootPane().getParent(),
                     "The HUSH GUI Wallet is currently considered experimental. Use of this software\n" +
                     "comes at your own risk! Be sure to read the list of known issues and limitations\n" +
-                    "at this page: https://github.com/vaklinov/hush-swing-wallet-ui\n\n" +
+                    "at this page: https://github.com/myhush/hush-swing-wallet-ui\n\n" +
                     "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n" +
                     "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n" +
                     "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n" +
@@ -375,7 +376,8 @@ public class ZCashUI
         	if ((os == OS_TYPE.WINDOWS) || (os == OS_TYPE.MAC_OS))
         	{
         		redirectLoggingToFile();
-        		possiblyCreateHUSHConfigFile();
+        		// possiblyCreateHUSHConfigFile(); TODO this is not run because on Win we have a batch file
+			// must change on mac, too
         	}
         	
             System.out.println("Starting HUSH Swing Wallet ...");
