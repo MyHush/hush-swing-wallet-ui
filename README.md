@@ -12,8 +12,6 @@ This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zd
 **only way to have full assurance of the safety of running the node/wallet software is to compile it from**
 **source code and to inspect the code first.**
 
-#### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/vaklinov/hush-swing-wallet-ui/blob/master/docs/Release_0.68.6.md) is available
-
 
 ## Building, installing and running the Wallet GUI
 
@@ -95,14 +93,6 @@ The details of how to build it are described below (easy to follow).
     rpcpassword=wjQOHVDQFLwztWp1Ehs098LKJHAXjd4E
     
     ``` 
-
-### Donations accepted
-At the present time this project is non-commercial in nature and developed by volunteers. If you find the GUI
-Wallet useful, please consider making a donation for its further development. Your contribution matters! Donations 
-are accepted at HUSH T address:
-```
-t1UDhNq2aEqvxEbPzcRM8n2QJV8YJ664rXJ
-```
 
 ### License
 This program is distributed under an [MIT License](https://github.com/vaklinov/hush-swing-wallet-ui/raw/master/LICENSE).
