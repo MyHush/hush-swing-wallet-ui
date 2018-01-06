@@ -1,4 +1,8 @@
+# DEPRECATED DO NOT USE Edit
+
+
 # [HUSH](https://myhush.org/) Desktop GUI Wallet
+
 
 ## Graphical user interface wrapper for the [HUSH (formerly Zdash)](https://myhush.org/) command line tools
 
