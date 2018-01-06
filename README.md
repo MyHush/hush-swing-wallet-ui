@@ -1,4 +1,6 @@
-# DEPRECATED DO NOT USE Edit
+# DEPRECATED DO NOT USE
+
+watchonly=true addresses show up as OWN addresses currently! You have been warned.
 
 
 # [HUSH](https://myhush.org/) Desktop GUI Wallet
