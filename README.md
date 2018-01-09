@@ -1,6 +1,6 @@
-# DEPRECATED DO NOT USE
+# BEWARE
 
-watchonly=true addresses show up as OWN addresses currently! You have been warned.
+watchonly=true addresses show up as OWN addresses currently! You have been warned. Some automated software like BarterDEX create these.
 
 
 # [HUSH](https://myhush.org/) Desktop GUI Wallet
