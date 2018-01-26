@@ -101,7 +101,7 @@ public class ZCashUI
     public ZCashUI(StartupProgressDialog progressDialog)
         throws IOException, InterruptedException, WalletCallException
     {
-        super("HUSH Wallet v0.70.0");
+        super("HUSH Wallet v0.71.0");
         
         if (progressDialog != null)
         {
@@ -129,7 +129,7 @@ public class ZCashUI
         		    dashboard = new DashboardPanel(this, installationObserver, clientCaller, errorReporter));
         tabs.addTab("Own addresses ",
         		    new ImageIcon(cl.getResource("images/own-addresses.png")),
-        		    addresses = new AddressesPanel(clientCaller, errorReporter));
+        		    addresses = new AddressesPanel(this, clientCaller, errorReporter));
         tabs.addTab("Send cash ",
         		    new ImageIcon(cl.getResource("images/send.png")),
         		    sendPanel = new SendCashPanel(clientCaller, errorReporter));
