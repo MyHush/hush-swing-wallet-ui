@@ -140,7 +140,7 @@ public class AddressesPanel
 					long start = System.currentTimeMillis();
 					String[][] data = AddressesPanel.this.getAddressBalanceDataFromWallet();
 					long end = System.currentTimeMillis();
-					System.out.println("Gathering of address/balance table data done in " + (end - start) + "ms." );
+					Log.ifno("Gathering of address/balance table data done in " + (end - start) + "ms." );
 					
 				    return data;
 				}
@@ -281,7 +281,7 @@ public class AddressesPanel
 
 		if (Util.arraysAreDifferent(lastAddressBalanceData, newAddressBalanceData))
 		{
-			System.out.println("Updating table of addresses/balances I...");
+			Log.ifno("Updating table of addresses/balances I...");
 			this.remove(addressBalanceTablePane);
 			this.add(addressBalanceTablePane = new JScrollPane(
 			             addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
@@ -309,7 +309,7 @@ public class AddressesPanel
 		if ((newAddressBalanceData != null) && 
 			Util.arraysAreDifferent(lastAddressBalanceData, newAddressBalanceData))
 		{
-			System.out.println("Updating table of addresses/balances A...");
+			Log.info("Updating table of addresses/balances A...");
 			this.remove(addressBalanceTablePane);
 			this.add(addressBalanceTablePane = new JScrollPane(
 			             addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
