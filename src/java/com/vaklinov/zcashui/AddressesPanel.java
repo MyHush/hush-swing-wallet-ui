@@ -407,7 +407,7 @@ public class AddressesPanel
 			boolean watchOnlyOrInvalid = this.validationMap.get(address).booleanValue();
 			if (watchOnlyOrInvalid)
 			{
-				System.out.println("The following address is invalid or a watch-only address: {0}. It will not be displayed!", address);
+				System.out.println("The following address is invalid or a watch-only address: {0}. It will not be displayed!" + address);
 				addressToDisplay = "<INVALID OR WATCH-ONLY ADDRESS> !!!";
 			}
 			// End of check for invalid/watch only addresses
