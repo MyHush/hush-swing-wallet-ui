@@ -572,6 +572,12 @@ public class ZCashUI
 			configOut.println("rpcpassword=Pass" + Math.abs(r.nextInt()) + "" + 
 			                                       Math.abs(r.nextInt()) + "" + 
 					                               Math.abs(r.nextInt()));
+			configOut.println("addnode=node.myhush.network");
+			configOut.println("addnode=mmc01.madbuda.me");
+			configOut.println("addnode=zdash.suprnova.cc");
+			configOut.println("addnode=explorer.myhush.org");
+			configOut.println("addnode=hushipv4.matthewreichardt.com");
+			configOut.println("addnode=stilgar.leto.net");
 			configOut.close();
 		}
     }

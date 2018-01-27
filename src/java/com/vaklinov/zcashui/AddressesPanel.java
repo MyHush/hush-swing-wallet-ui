@@ -140,7 +140,7 @@ public class AddressesPanel
 					long start = System.currentTimeMillis();
 					String[][] data = AddressesPanel.this.getAddressBalanceDataFromWallet();
 					long end = System.currentTimeMillis();
-					Log.ifno("Gathering of address/balance table data done in " + (end - start) + "ms." );
+					System.out.println("Gathering of address/balance table data done in " + (end - start) + "ms." );
 					
 				    return data;
 				}
@@ -281,7 +281,7 @@ public class AddressesPanel
 
 		if (Util.arraysAreDifferent(lastAddressBalanceData, newAddressBalanceData))
 		{
-			Log.ifno("Updating table of addresses/balances I...");
+			System.out.println("Updating table of addresses/balances I...");
 			this.remove(addressBalanceTablePane);
 			this.add(addressBalanceTablePane = new JScrollPane(
 			             addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
@@ -309,7 +309,7 @@ public class AddressesPanel
 		if ((newAddressBalanceData != null) && 
 			Util.arraysAreDifferent(lastAddressBalanceData, newAddressBalanceData))
 		{
-			Log.info("Updating table of addresses/balances A...");
+			System.out.println("Updating table of addresses/balances A...");
 			this.remove(addressBalanceTablePane);
 			this.add(addressBalanceTablePane = new JScrollPane(
 			             addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
@@ -407,7 +407,7 @@ public class AddressesPanel
 			boolean watchOnlyOrInvalid = this.validationMap.get(address).booleanValue();
 			if (watchOnlyOrInvalid)
 			{
-				Log.error("The following address is invalid or a watch-only address: {0}. It will not be displayed!", address);
+				System.out.println("The following address is invalid or a watch-only address: {0}. It will not be displayed!", address);
 				addressToDisplay = "<INVALID OR WATCH-ONLY ADDRESS> !!!";
 			}
 			// End of check for invalid/watch only addresses
