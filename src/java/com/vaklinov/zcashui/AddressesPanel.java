@@ -114,8 +114,8 @@ public class AddressesPanel
 		// Table of addresses
 		lastAddressBalanceData = getAddressBalanceDataFromWallet();
 		addressesPanel.add(addressBalanceTablePane = new JScrollPane(
-				               addressBalanceTable = this.createAddressBalanceTable(lastAddressBalanceData)),
-				           BorderLayout.CENTER);
+							   addressBalanceTable = this.createAddressBalanceTable(lastAddressBalanceData)),
+						   BorderLayout.CENTER);
 		
 		JPanel warningPanel = new JPanel();
 		warningPanel.setLayout(new BorderLayout(3, 3));
@@ -126,7 +126,7 @@ public class AddressesPanel
 				"part in a transaction. The shown balance then is the expected value it will have when " +
 				"the transaction is confirmed. " +
 				"The average confirmation time is 2.5 min." +
-			    "</span>");
+				"</span>");
 		warningPanel.add(warningL, BorderLayout.NORTH);
 		addressesPanel.add(warningPanel, BorderLayout.NORTH);
 		
@@ -142,7 +142,7 @@ public class AddressesPanel
 					long end = System.currentTimeMillis();
 					System.out.println("Gathering of address/balance table data done in " + (end - start) + "ms." );
 					
-				    return data;
+					return data;
 				}
 			}, 
 			this.errorReporter, 25000);
@@ -284,8 +284,8 @@ public class AddressesPanel
 			System.out.println("Updating table of addresses/balances I...");
 			this.remove(addressBalanceTablePane);
 			this.add(addressBalanceTablePane = new JScrollPane(
-			             addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
-			         BorderLayout.CENTER);
+						 addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
+					 BorderLayout.CENTER);
 			lastAddressBalanceData = newAddressBalanceData;
 
 			this.validate();
@@ -312,8 +312,8 @@ public class AddressesPanel
 			System.out.println("Updating table of addresses/balances A...");
 			this.remove(addressBalanceTablePane);
 			this.add(addressBalanceTablePane = new JScrollPane(
-			             addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
-		         BorderLayout.CENTER);
+						 addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
+				 BorderLayout.CENTER);
 			lastAddressBalanceData = newAddressBalanceData;
 			this.validate();
 			this.repaint();
@@ -325,13 +325,13 @@ public class AddressesPanel
 		throws WalletCallException, IOException, InterruptedException
 	{
 		String columnNames[] = { "Balance", "Confirmed?", "Address" };
-        JTable table = new AddressTable(rowData, columnNames, this.clientCaller);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-        table.getColumnModel().getColumn(0).setPreferredWidth(160);
-        table.getColumnModel().getColumn(1).setPreferredWidth(140);
-        table.getColumnModel().getColumn(2).setPreferredWidth(1000);
+		JTable table = new AddressTable(rowData, columnNames, this.clientCaller);
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+		table.getColumnModel().getColumn(0).setPreferredWidth(160);
+		table.getColumnModel().getColumn(1).setPreferredWidth(140);
+		table.getColumnModel().getColumn(2).setPreferredWidth(1000);
 
-        return table;
+		return table;
 	}
 
 
@@ -392,15 +392,15 @@ public class AddressesPanel
 				
 				if (validationResult)
 				{
-		            JOptionPane.showMessageDialog(
-		                this.parentFrame,
-		                "An invalid or watch-only address exists in the wallet:" + "\n" +
-		                address + "\n\n" +
-		                "The GUI wallet software cannot operate properly with addresses that are invalid or\n" +
-		                "exist in the wallet as watch-only addresses. Do NOT use this address as a destination\n" +
-		                "address for payment operations!",
-		                "Error: invalid or watch-only address exists!",
-		                JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(
+						this.parentFrame,
+						"An invalid or watch-only address exists in the wallet:" + "\n" +
+						address + "\n\n" +
+						"The GUI wallet software cannot operate properly with addresses that are invalid or\n" +
+						"exist in the wallet as watch-only addresses. Do NOT use this address as a destination\n" +
+						"address for payment operations!",
+						"Error: invalid or watch-only address exists!",
+						JOptionPane.ERROR_MESSAGE);
 				}
 			}
 			
