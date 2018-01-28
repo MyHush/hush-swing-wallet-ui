@@ -1,4 +1,4 @@
-# hushh4win
+# hush4win
 
 ## A Hush full node and GUI wallet for 64-bit Windows
 
