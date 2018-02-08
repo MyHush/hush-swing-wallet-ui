@@ -101,7 +101,7 @@ public class ZCashUI
     public ZCashUI(StartupProgressDialog progressDialog)
         throws IOException, InterruptedException, WalletCallException
     {
-        super("HUSH Wallet v0.70.0");
+        super("HUSH Wallet v0.71.0");
         
         if (progressDialog != null)
         {
@@ -129,7 +129,7 @@ public class ZCashUI
         		    dashboard = new DashboardPanel(this, installationObserver, clientCaller, errorReporter));
         tabs.addTab("Own addresses ",
         		    new ImageIcon(cl.getResource("images/own-addresses.png")),
-        		    addresses = new AddressesPanel(clientCaller, errorReporter));
+        		    addresses = new AddressesPanel(this, clientCaller, errorReporter));
         tabs.addTab("Send cash ",
         		    new ImageIcon(cl.getResource("images/send.png")),
         		    sendPanel = new SendCashPanel(clientCaller, errorReporter));
@@ -572,6 +572,12 @@ public class ZCashUI
 			configOut.println("rpcpassword=Pass" + Math.abs(r.nextInt()) + "" + 
 			                                       Math.abs(r.nextInt()) + "" + 
 					                               Math.abs(r.nextInt()));
+			configOut.println("addnode=node.myhush.network");
+			configOut.println("addnode=mmc01.madbuda.me");
+			configOut.println("addnode=zdash.suprnova.cc");
+			configOut.println("addnode=explorer.myhush.org");
+			configOut.println("addnode=hushipv4.matthewreichardt.com");
+			configOut.println("addnode=stilgar.leto.net");
 			configOut.close();
 		}
     }
