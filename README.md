@@ -12,7 +12,7 @@ This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zd
 
 ![Screenshot](docs/HUSHWallet.png "Main Window")
 
-#### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/vaklinov/hush-swing-wallet-ui/blob/master/docs/Release_0.68.6.md) is available
+#### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/MyHush/hush-swing-wallet-ui/blob/master/docs/Release_0.68.6.md) is available
 
 
 ## Building, installing and running the Wallet GUI
@@ -20,7 +20,7 @@ This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zd
 Before installing the Desktop GUI Wallet you need to have HUSH up and running. The following [guide](https://github.com/MyHush/hush/blob/master/README.md) explains how to set up [HUSH (formerly Zdash)](https://myhush.org/). 
 
 **For security reasons it is recommended to always build the GUI wallet program from GitHub**
-**[source](https://github.com/vaklinov/hush-swing-wallet-ui/archive/master.zip).**
+**[source](https://github.com/MyHush/hush-swing-wallet-ui/archive/master.zip).**
 The details of how to build it are described below (easy to follow). 
 
 1. Operating system and tools
@@ -45,7 +45,7 @@ The details of how to build it are described below (easy to follow).
 
    As a start you need to clone the hush-swing-wallet-ui Git repository:
    ```
-   user@ubuntu:~/build-dir$ git clone https://github.com/vaklinov/hush-swing-wallet-ui.git
+   user@ubuntu:~/build-dir$ git clone https://github.com/MyHush/hush-swing-wallet-ui.git
    ```
    Change the current directory:
    ```
@@ -105,7 +105,7 @@ t1UDhNq2aEqvxEbPzcRM8n2QJV8YJ664rXJ
 ```
 
 ### License
-This program is distributed under an [MIT License](https://github.com/vaklinov/hush-swing-wallet-ui/raw/master/LICENSE).
+This program is distributed under an [MIT License](https://github.com/MyHush/hush-swing-wallet-ui/raw/master/LICENSE).
 
 ### Disclaimer
 
