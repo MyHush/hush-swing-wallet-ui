@@ -1,18 +1,8 @@
-# BEWARE
-
-watchonly=true addresses show up as OWN addresses currently! You have been warned. Some automated software like BarterDEX create these.
-
-
 # [HUSH](https://myhush.org/) Desktop GUI Wallet
 
-
-## Graphical user interface wrapper for the [HUSH (formerly Zdash)](https://myhush.org/) command line tools
-
-This program provides a Graphical User Interface (GUI) for the HUSH (formerly Zdash) client tools that acts as a wrapper and presents the information in a user-friendly manner.
+This application provides a Graphical User Interface (GUI) for the [HUSH](https://myhush.org/) (formerly Zdash) client tools that acts as a wrapper and presents the information in a more user-friendly manner.
 
 ![Screenshot](docs/HUSHWallet.png "Main Window")
-
-#### New/Experimental: [HUSH Desktop GUI Wallet for Windows](https://github.com/MyHush/hush-swing-wallet-ui/blob/master/docs/Release_0.68.6.md) is available
 
 
 ## Building, installing and running the Wallet GUI
@@ -96,7 +86,9 @@ The details of how to build it are described below (easy to follow).
     
     ``` 
 
+
 ### Donations accepted
+
 At the present time this project is non-commercial in nature and developed by volunteers. If you find the GUI
 Wallet useful, please consider making a donation for its further development. Your contribution matters! Donations 
 are accepted at HUSH T address:
@@ -104,15 +96,26 @@ are accepted at HUSH T address:
 t1UDhNq2aEqvxEbPzcRM8n2QJV8YJ664rXJ
 ```
 
+
 ### License
-This program is distributed under an [MIT License](https://github.com/MyHush/hush-swing-wallet-ui/raw/master/LICENSE).
 
-### Disclaimer
+This program is distributed under an [MIT License](LICENSE).
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+
+### Known issues and limitations
+
+1. Issue: Wallet versions 0.58 and below, when running on systems with (typically non-western) locales that
+redefine the decimal point in the OS locale settings, have problems with updating the GUI wallet state. 
+A workaround is to change the [locale settings](https://windows.lbl.gov/software/optics/5-1-2/Optics4.jpg) to have dot as decimal separator.
+2. Limitation: Wallet encryption has been temporarily disabled in all ZCash forks due to stability problems. A corresponding issue 
+[#1552](https://github.com/zcash/zcash/issues/1552) has been opened by the ZCash developers. Correspondingly
+wallet encryption has been temporarily disabled in the Hush Desktop GUI Wallet.
+3. Issue: the GUI wallet does not work correctly if hushd is started with a custom data directory, like:
+`hushd -datadir=/home/data/whatever` This will be fixed in later versions.
+4. Issue: GUI data tables (transactions/addresses etc.) allow copying of data via double click but also allow editing. 
+The latter needs to be disabled. 
+5. Limitation: The list of transactions does not show all outgoing ones (specifically outgoing Z address 
+transactions). A corresponding issue [#1438](https://github.com/zcash/zcash/issues/1438) has been opened 
+for the ZCash developers. 
+6. Limitation: The CPU percentage shown to be taken by hushd on Linux is the average for the entire lifetime 
+of the process. This is not very useful. This will be improved in future versions.
