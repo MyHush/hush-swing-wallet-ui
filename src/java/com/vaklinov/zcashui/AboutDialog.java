@@ -6,7 +6,8 @@
  * /____\____\__,_|___/_| |_|____/ \_/\_/ |_|_| |_|\__, | \_/\_/ \__,_|_|_|\___|\__|\___/|___|
  *                                                 |___/
  *
- * Copyright (c) 2017-2018 The Hush Developers <contact@myhush.org>
+ * Copyright (c) 2016-2017 Ivan Vaklinov <ivan@vaklinov.com>
+ * Copyright (c) 2018 The Hush Developers <contact@myhush.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -224,7 +225,8 @@ public class AboutDialog
 		JLabel licenseLabel = new JLabel();
 		licenseLabel.setText(
 			"<html><body><pre>" +
-		    " Copyright (c) 20127-2018 The Hush Developers &lt;contact@myhush.org&gt; \n" +
+		    " Copyright (c) 2016-2017 Ivan Vaklinov &lt;ivan@vaklinov.com&gt; \n" +
+		    " Copyright (c) 2018 The Hush Developers &lt;contact@myhush.org&gt; \n" +
 			"\n" +
 			" Permission is hereby granted, free of charge, to any person obtaining a copy\n" +
 			" of this software and associated documentation files (the \"Software\"), to deal\n" +
