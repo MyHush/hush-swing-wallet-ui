@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+    <Product Id="0066db28-2231-4d5b-8629-0810c0b3a443" Name="hush" 
+             Language="1033" Version="1.0.12"
+             Manufacturer="myhush.org" 
+             UpgradeCode="746d078b-3c47-4126-94b1-cdd1a9791aae">
+        <Package Description="hush" Comments="None"
+                 InstallerVersion="200" Compressed="yes"
+                 InstallScope="perMachine" Platform="x64"/>
+        <Media Id="1" Cabinet="simple.cab" EmbedCab="yes" />
+
+        <!-- We use RemoveFolderEx to ensure application folder is fully 
+             removed on uninstall. Including files created outside of MSI
+             after application had been installed (e.g. on AU or user state).
+             
+             Hovewer, RemoveFolderEx is only available in WiX 3.6, 
+             we will comment it out if we running older WiX.
+
+             RemoveFolderEx requires that we "remember" the path for uninstall.
+             Read the path value and set the APPLICATIONFOLDER property with the value.
+        -->
+        <Property Id="APPLICATIONFOLDER">
+            <RegistrySearch Key="SOFTWARE\Unknown\hush" 
+                            Root="HKLM" Type="raw" 
+                            Id="APPLICATIONFOLDER_REGSEARCH" Name="Path" />
+        </Property>
+        <DirectoryRef Id="APPLICATIONFOLDER">
+            <Component Id="CleanupMainApplicationFolder" Guid="*" Win64="yes">
+                <RegistryValue Root="HKLM"
+                                   Key="SOFTWARE\Unknown\hush"
+                                   Name="Path" Type="string" Value="[APPLICATIONFOLDER]"
+                                   KeyPath="yes" />
+                <!-- We need to use APPLICATIONFOLDER variable here or RemoveFolderEx
+                     will not remove on "install". But only if WiX 3.6 is used. -->
+                <!--     
+                  <util:RemoveFolderEx On="uninstall" Property="APPLICATIONFOLDER" />
+                -->
+            </Component>
+        </DirectoryRef>        
+        <?include bundle.wxi ?>
+     <UI>
+     <UIRef Id="WixUI_Minimal" />
+     </UI>
+
+
+        <Icon Id="DesktopIcon.exe" SourceFile="hush.ico" />
+        <Icon Id="StartMenuIcon.exe" SourceFile="hush.ico" />
+
+    </Product>
+</Wix>

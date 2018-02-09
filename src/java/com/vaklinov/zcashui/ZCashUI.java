@@ -6,7 +6,8 @@
  * /____\____\__,_|___/_| |_|____/ \_/\_/ |_|_| |_|\__, | \_/\_/ \__,_|_|_|\___|\__|\___/|___|
  *                                                 |___/
  *
- * Copyright (c) 2016 Ivan Vaklinov <ivan@vaklinov.com>
+ * Copyright (c) 2016-2017 Ivan Vaklinov <ivan@vaklinov.com>
+ * Copyright (c) 2018 The Hush Developers <contact@myhush.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -100,7 +101,7 @@ public class ZCashUI
     public ZCashUI(StartupProgressDialog progressDialog)
         throws IOException, InterruptedException, WalletCallException
     {
-        super("HUSH Swing Wallet UI 0.68.6 (beta)");
+        super("HUSH Wallet v0.71.0");
         
         if (progressDialog != null)
         {
@@ -128,7 +129,7 @@ public class ZCashUI
         		    dashboard = new DashboardPanel(this, installationObserver, clientCaller, errorReporter));
         tabs.addTab("Own addresses ",
         		    new ImageIcon(cl.getResource("images/own-addresses.png")),
-        		    addresses = new AddressesPanel(clientCaller, errorReporter));
+        		    addresses = new AddressesPanel(this, clientCaller, errorReporter));
         tabs.addTab("Send cash ",
         		    new ImageIcon(cl.getResource("images/send.png")),
         		    sendPanel = new SendCashPanel(clientCaller, errorReporter));
@@ -317,7 +318,7 @@ public class ZCashUI
                     ZCashUI.this.getRootPane().getParent(),
                     "The HUSH GUI Wallet is currently considered experimental. Use of this software\n" +
                     "comes at your own risk! Be sure to read the list of known issues and limitations\n" +
-                    "at this page: https://github.com/vaklinov/hush-swing-wallet-ui\n\n" +
+                    "at this page: https://github.com/myhush/hush-swing-wallet-ui\n\n" +
                     "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n" +
                     "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n" +
                     "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n" +
@@ -365,18 +366,19 @@ public class ZCashUI
     public static void main(String argv[])
         throws IOException
     {
-    	
-    	
-        try
+    	try
         {
         	OS_TYPE os = OSUtil.getOSType();
         	
         	// On Windows/Mac we log to a file only! - users typically do not use consoles
-        	if ((os == OS_TYPE.WINDOWS) || (os == OS_TYPE.MAC_OS))
+        	if (os == OS_TYPE.WINDOWS || os == OS_TYPE.MAC_OS)
         	{
         		redirectLoggingToFile();
-        		possiblyCreateHUSHConfigFile();
         	}
+            if (os != OS_TYPE.WINDOWS) {
+                possiblyCreateHUSHConfigFile(); // this is not run because on Win we have a batch file
+                // BRX-TODO: Remove batch file and handle this back in this GUI client again
+            }
         	
             System.out.println("Starting HUSH Swing Wallet ...");
             System.out.println("OS: " + System.getProperty("os.name") + " = " + os);
@@ -570,9 +572,13 @@ public class ZCashUI
 			configOut.println("rpcpassword=Pass" + Math.abs(r.nextInt()) + "" + 
 			                                       Math.abs(r.nextInt()) + "" + 
 					                               Math.abs(r.nextInt()));
-			configOut.close();
+			configOut.println("addnode=explorer.myhush.org");
+			configOut.println("addnode=stilgar.leto.net");
+			configOut.println("addnode=zdash.suprnova.cc");
+			configOut.println("addnode=dnsseed.myhush.org");
+
+            configOut.close();
 		}
     }
-    
-    
+
 }
