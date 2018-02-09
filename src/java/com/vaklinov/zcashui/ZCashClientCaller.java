@@ -61,6 +61,12 @@ import com.vaklinov.zcashui.OSUtil.OS_TYPE;
  */
 public class ZCashClientCaller
 {
+	class DaemonUnavailableException extends Exception {
+		DaemonUnavailableException(final String message) {
+			super(message);
+		}
+	}
+
 	public static class WalletBalance
 	{
 		public double transparentBalance;
@@ -161,7 +167,7 @@ public class ZCashClientCaller
 	
 
 	public synchronized JsonObject getDaemonRawRuntimeInfo() 
-		throws IOException, InterruptedException, WalletCallException 
+		throws IOException, InterruptedException, DaemonUnavailableException
 	{
 	    CommandExecutor infoGetter = new CommandExecutor(
 	            new String[] { zcashcli.getCanonicalPath(), "getinfo"} );
@@ -169,7 +175,7 @@ public class ZCashClientCaller
 	    
 	    if (info.trim().toLowerCase(Locale.ROOT).startsWith("error: couldn't connect to server"))
 	    {
-	    	throw new IOException(info.trim());
+	    	throw new DaemonUnavailableException(info.trim());
 	    }
 	    
 	    if (info.trim().toLowerCase(Locale.ROOT).startsWith("error: "))
