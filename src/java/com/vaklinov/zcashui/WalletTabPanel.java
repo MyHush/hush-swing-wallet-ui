@@ -28,18 +28,16 @@
  **********************************************************************************/
 package com.vaklinov.zcashui;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.JPanel;
-import javax.swing.Timer;
 
 /**
  * Base for all panels contained as wallet TABS.
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class WalletTabPanel extends JPanel {
+class WalletTabPanel extends JPanel {
     // Lists of threads and timers that may be stopped if necessary
     List<Timer> timers;
     List<DataGatheringThread<?>> threads;

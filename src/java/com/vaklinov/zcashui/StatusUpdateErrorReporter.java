@@ -5,7 +5,7 @@
  *  / /| |__| (_| \__ \ | | |___) \ V  V /| | | | | (_| |\ V  V / (_| | | |  __/ |_| |_| || | 
  * /____\____\__,_|___/_| |_|____/ \_/\_/ |_|_| |_|\__, | \_/\_/ \__,_|_|_|\___|\__|\___/|___|
  *                                                 |___/                                      
- *                                       
+ *
  * Copyright (c) 2016 Ivan Vaklinov <ivan@vaklinov.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -14,10 +14,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,53 +28,46 @@
  **********************************************************************************/
 package com.vaklinov.zcashui;
 
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 
 /**
  * Reporter for periodic errors. Will later have options to filter errors etc.
- * 
+ *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-class StatusUpdateErrorReporter
-{	
-	private final JFrame parent;
-	private long lastReportedErrroTime = 0;
-	
-	public StatusUpdateErrorReporter(JFrame parent)
-	{
-		this.parent = parent;
-	}
-	
-	public void reportError(Exception e)
-	{
-		reportError(e, true);
-	}	
-	
-	public void reportError(Exception e, boolean isDueToAutomaticUpdate)
-	{
-		e.printStackTrace();
-		
-		// TODO: Error logging
-		long time = System.currentTimeMillis();
-		
-		// TODO: More complex filtering/tracking in the future
-		if (isDueToAutomaticUpdate && (time - lastReportedErrroTime) < (45 * 1000))
-		{
-			return;
-		}
-		
-		if (isDueToAutomaticUpdate)
-		{
-			lastReportedErrroTime = time;
-		}
-		
-		JOptionPane.showMessageDialog(
-			parent, 
-			"An unexpected error occurred when updating the GUI wallet\n" +
-			"state. Please ensure that the HUSH daemon is running. \n" +
-			"\n" +
-			e.getMessage(),
-			"Error in updating status.", JOptionPane.ERROR_MESSAGE);
-	}
+class StatusUpdateErrorReporter {
+    private final JFrame parent;
+    private long lastReportedErrroTime = 0;
+
+    public StatusUpdateErrorReporter(JFrame parent) {
+        this.parent = parent;
+    }
+
+    public void reportError(Exception e) {
+        reportError(e, true);
+    }
+
+    public void reportError(Exception e, boolean isDueToAutomaticUpdate) {
+        e.printStackTrace();
+
+        // TODO: Error logging
+        long time = System.currentTimeMillis();
+
+        // TODO: More complex filtering/tracking in the future
+        if (isDueToAutomaticUpdate && (time - lastReportedErrroTime) < (45 * 1000)) {
+            return;
+        }
+
+        if (isDueToAutomaticUpdate) {
+            lastReportedErrroTime = time;
+        }
+
+        JOptionPane.showMessageDialog(
+                parent,
+                "An unexpected error occurred when updating the GUI wallet\n" +
+                        "state. Please ensure that the HUSH daemon is running. \n" +
+                        "\n" +
+                        e.getMessage(),
+                "Error in updating status.", JOptionPane.ERROR_MESSAGE);
+    }
 }
