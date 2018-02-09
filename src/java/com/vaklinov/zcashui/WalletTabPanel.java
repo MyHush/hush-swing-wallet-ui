@@ -28,92 +28,37 @@
  **********************************************************************************/
 package com.vaklinov.zcashui;
 
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
-
-
 /**
  * Base for all panels contained as wallet TABS.
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class WalletTabPanel
-	extends JPanel
-{	
-	// Lists of threads and timers that may be stopped if necessary
-	protected List<Timer> timers                   = null;
-	protected List<DataGatheringThread<?>> threads = null;	
+public class WalletTabPanel extends JPanel {
+    // Lists of threads and timers that may be stopped if necessary
+    List<Timer> timers;
+    List<DataGatheringThread<?>> threads;
 
 
-	public WalletTabPanel()
-		throws IOException, InterruptedException, WalletCallException
-	{		
-		super();
-		
-		this.timers = new ArrayList<Timer>();
-		this.threads = new ArrayList<DataGatheringThread<?>>();
-	}
+    WalletTabPanel() {
+        super();
 
-	
-	public void stopThreadsAndTimers()
-	{
-		for (Timer t : this.timers)
-		{
-			t.stop();
-		}
-		
-		for (DataGatheringThread<?> t : this.threads)
-		{
-			t.setSuspended(true);
-		}
-	}
-	
-	
-	// Interval is in milliseconds
-	// Returns true if all threads have ended, else false
-	public boolean waitForEndOfThreads(long interval)
-	{
-		synchronized (this) 
-		{
-			long startWait = System.currentTimeMillis();
-			long endWait = startWait;
-			do
-			{
-				boolean allEnded = true;
-				for (DataGatheringThread<?> t : this.threads)
-				{
-					if (t.isAlive())
-					{
-						allEnded = false;
-					}
-				}
-				
-				if (allEnded)
-				{
-					return true; // End here
-				}
-				
-				try
-				{
-					this.wait(100);
-				} catch (InterruptedException ie)
-				{
-					// One of the rare cases where we do nothing
-					ie.printStackTrace();
-				}
-				
-				endWait = System.currentTimeMillis();
-			} while ((endWait - startWait) <= interval);
-		}
-		
-		return false;
-	}
-	
-} // End class
+        this.timers = new ArrayList<>();
+        this.threads = new ArrayList<>();
+    }
+
+    public void stopThreadsAndTimers() {
+        for (Timer timer : timers) {
+            timer.stop();
+        }
+        for (DataGatheringThread<?> thread : threads) {
+            thread.setSuspended(true);
+        }
+    }
+
+}

@@ -3,18 +3,12 @@
 package com.vaklinov.zcashui;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Container;
-import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -22,7 +16,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 
 import com.eclipsesource.json.JsonObject;
@@ -77,7 +70,7 @@ public class StartupProgressDialog extends JFrame {
     }
     
     public void waitForStartup() throws IOException,
-        InterruptedException,WalletCallException,InvocationTargetException {
+        InterruptedException,WalletCallException {
         
         // special handling of Windows app launch
         if (OSUtil.getOSType() == OS_TYPE.WINDOWS) 
@@ -169,7 +162,7 @@ public class StartupProgressDialog extends JFrame {
 	                		daemonProcess.destroy();
 	                	}
 	                	
-	                	if (end - start > 1 * 60 * 1000)
+	                	if (end - start > 60 * 1000)
 	                	{
 	                		break;
 	                	}

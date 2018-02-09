@@ -62,7 +62,6 @@ public class PasswordDialog
 	protected JTextField passwordField = null;
 	
 	protected JLabel upperLabel;
-	protected JLabel lowerLabel;
 	
 	protected JPanel freeSlotPanel;
 	protected JPanel freeSlotPanel2;
@@ -106,10 +105,13 @@ public class PasswordDialog
 		controlsPanel.add(this.freeSlotPanel2);
 
 		tempPanel = new JPanel(new BorderLayout(0, 0));
-		tempPanel.add(this.lowerLabel = new JLabel("<html><span style=\"font-weight:bold\">" + 
-		                         "WARNING: Never enter your password on a public/shared " +
-		                         "computer or one that you suspect has been infected with malware! " +
-				                 "</span></html>"), BorderLayout.CENTER);
+		tempPanel.add(new JLabel(
+				"<html><span style=\"font-weight:bold\">" +
+				 "WARNING: Never enter your password on a public/shared " +
+				 "computer or one that you suspect has been infected with malware! " +
+				 "</span></html>"
+			), BorderLayout.CENTER
+		);
 		controlsPanel.add(tempPanel);
 		
 		this.getContentPane().setLayout(new BorderLayout(0, 0));
@@ -125,27 +127,15 @@ public class PasswordDialog
 		buttonPanel.add(cancelButon);
 		this.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
-		okButon.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				PasswordDialog.this.processOK();
-			}
-		});
+		okButon.addActionListener(e -> PasswordDialog.this.processOK());
 		
-		cancelButon.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				PasswordDialog.this.setVisible(false);
-				PasswordDialog.this.dispose();
-				
-				PasswordDialog.this.isOKPressed = false;
-				PasswordDialog.this.password = null;
-			}
-		});
+		cancelButon.addActionListener(e -> {
+            PasswordDialog.this.setVisible(false);
+            PasswordDialog.this.dispose();
+
+            PasswordDialog.this.isOKPressed = false;
+            PasswordDialog.this.password = null;
+        });
 		
 		this.setSize(450, 190);
 		this.validate();

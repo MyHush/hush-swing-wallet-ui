@@ -53,14 +53,12 @@ public class ZCashInstallationObserver
 		public double cpuPercentage;
 	}
 
-	public static enum DAEMON_STATUS
+	public enum DAEMON_STATUS
 	{
 		RUNNING,
 		NOT_RUNNING,
-		UNABLE_TO_ASCERTAIN;
+		UNABLE_TO_ASCERTAIN
 	}
-
-	private String args[];
 
 	public ZCashInstallationObserver(String installDir)
 		throws IOException
@@ -129,54 +127,47 @@ public class ZCashInstallationObserver
 		{
 			StringTokenizer st = new StringTokenizer(line, " \t", false);
 			boolean foundZCash = false;
-			for (int i = 0; i < 11; i++)
-			{
-				String token = null;
-				if (st.hasMoreTokens())
-				{
+			label:
+			for (int i = 0; i < 11; i++) {
+				final String token;
+				if (st.hasMoreTokens()) {
 					token = st.nextToken();
-				} else
-				{
+				} else {
 					break;
 				}
 
-				if (i == 2)
-				{
-					try
-					{
-						info.cpuPercentage = Double.valueOf(token);
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
-				} else if (i == 4)
-				{
-					try
-					{
-						info.virtualSizeMB = Double.valueOf(token) / 1000;
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
-				} else if (i == 5)
-				{
-					try
-					{
-					    info.residentSizeMB = Double.valueOf(token) / 1000;
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
-				} else if (i == 10)
-				{
-					if ((token.equals("hushd")) || (token.endsWith("/hushd")))
-					{
-						info.status = DAEMON_STATUS.RUNNING;
-						foundZCash = true;
+				switch (i) {
+					case 2:
+						try {
+							info.cpuPercentage = Double.valueOf(token);
+						} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
 						break;
-					}
+					case 4:
+						try {
+							info.virtualSizeMB = Double.valueOf(token) / 1000;
+						} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
+						break;
+					case 5:
+						try {
+							info.residentSizeMB = Double.valueOf(token) / 1000;
+						} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
+						break;
+					case 10:
+						if ((token.equals("hushd")) || (token.endsWith("/hushd"))) {
+							info.status = DAEMON_STATUS.RUNNING;
+							foundZCash = true;
+							break label;
+						}
+						break;
 				}
 			}
 
-			if (foundZCash)
-			{
+			if (foundZCash) {
 				break;
 			}
 		}
 
-		if (info.status != DAEMON_STATUS.RUNNING)
-		{
+		if (info.status != DAEMON_STATUS.RUNNING) {
 			info.cpuPercentage  = 0;
 			info.residentSizeMB = 0;
 			info.virtualSizeMB  = 0;
@@ -200,29 +191,15 @@ public class ZCashInstallationObserver
 		String line;
 		while ((line = lnr.readLine()) != null)
 		{
-			StringTokenizer st = new StringTokenizer(line, " \t", false);
+			final StringTokenizer stringTokenizer = new StringTokenizer(line, " \t", false);
 			boolean foundZCash = false;
-			String size = "";
+			final StringBuilder size = new StringBuilder();
 			for (int i = 0; i < 8; i++)
 			{
-				String token = null;
-				if (st.hasMoreTokens())
-				{
-					token = st.nextToken();
-				} else
-				{
+				if (!stringTokenizer.hasMoreTokens()) {
 					break;
 				}
-				
-				if (token.startsWith("\""))
-				{
-					token = token.substring(1);
-				}
-				
-				if (token.endsWith("\""))
-				{
-					token = token.substring(0, token.length() - 1);
-				}
+				final String token = stringTokenizer.nextToken().replaceAll("^\"|\"$", "");
 
 				if (i == 0)
 				{
@@ -232,36 +209,28 @@ public class ZCashInstallationObserver
 						foundZCash = true;
 						//System.out.println("ZCashd process data is: " + line);
 					}
-				} else if ((i >= 4) && foundZCash)
-				{
-					try
-					{
-						size += token.replaceAll("[^0-9]", "");
-						if (size.endsWith("K"))
-						{
-							size = size.substring(0, size.length() - 1);
+				} else if ((i >= 4) && foundZCash) {
+					try {
+						size.append(token.replaceAll("[^0-9]", ""));
+						if (size.toString().endsWith("K")) {
+							size.setLength(size.length() - 1);
 						}
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
+					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
 				} 
 			} // End parsing row
 
-			if (foundZCash)
-			{
-				try
-				{
-					info.residentSizeMB = Double.valueOf(size) / 1000;
-				} catch (NumberFormatException nfe)
-				{
+			if (foundZCash) {
+				try {
+					info.residentSizeMB = Double.valueOf(size.toString()) / 1000;
+				} catch (NumberFormatException nfe) {
 					info.residentSizeMB = 0;
 					System.out.println("Error: could not find the numeric memory size of hushd: " + size);
-				};
-				
+				}
 				break;
 			}
 		}
 
-		if (info.status != DAEMON_STATUS.RUNNING)
-		{
+		if (info.status != DAEMON_STATUS.RUNNING) {
 			info.cpuPercentage  = 0;
 			info.residentSizeMB = 0;
 			info.virtualSizeMB  = 0;

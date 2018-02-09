@@ -44,6 +44,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
 
@@ -72,34 +73,20 @@ import com.vaklinov.zcashui.ZCashInstallationObserver.InstallationDetectionExcep
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class ZCashUI
+class ZCashUI
     extends JFrame
 {
-    private ZCashInstallationObserver installationObserver;
-    private ZCashClientCaller         clientCaller;
-    private StatusUpdateErrorReporter errorReporter;
+    private final StatusUpdateErrorReporter errorReporter;
 
     private WalletOperations walletOps;
-
-    private JMenuItem menuItemExit;
-    private JMenuItem menuItemAbout;
-    private JMenuItem menuItemEncrypt;
-    private JMenuItem menuItemBackup;
-    private JMenuItem menuItemExportKeys;
-    private JMenuItem menuItemImportKeys;
-    private JMenuItem menuItemShowPrivateKey;
-    private JMenuItem menuItemImportOnePrivateKey;
 
     private DashboardPanel   dashboard;
     private AddressesPanel   addresses;
     private SendCashPanel    sendPanel;
-    private AddressBookPanel addressBookPanel;
-    
-    JTabbedPane tabs;
 
-    public ZCashUI(StartupProgressDialog progressDialog)
-        throws IOException, InterruptedException, WalletCallException
-    {
+    private JTabbedPane tabs;
+
+    private ZCashUI(final StartupProgressDialog progressDialog) throws IOException, InterruptedException, WalletCallException {
         super("HUSH Swing Wallet UI 0.68.6 (beta)");
         
         if (progressDialog != null)
@@ -107,16 +94,15 @@ public class ZCashUI
         	progressDialog.setProgressText("Starting GUI wallet...");
         }
         
-        ClassLoader cl = this.getClass().getClassLoader();
-
+        final ClassLoader cl = this.getClass().getClassLoader();
 
         this.setIconImage(new ImageIcon(cl.getResource("images/zcash-logo-square3.png")).getImage());
 
         Container contentPane = this.getContentPane();
 
         errorReporter = new StatusUpdateErrorReporter(this);
-        installationObserver = new ZCashInstallationObserver(OSUtil.getProgramDirectory());
-        clientCaller = new ZCashClientCaller(OSUtil.getProgramDirectory());
+        final ZCashInstallationObserver installationObserver = new ZCashInstallationObserver(OSUtil.getProgramDirectory());
+        final ZCashClientCaller clientCaller = new ZCashClientCaller(OSUtil.getProgramDirectory());
 
         // Build content
         tabs = new JTabbedPane();
@@ -134,11 +120,11 @@ public class ZCashUI
         		    sendPanel = new SendCashPanel(clientCaller, errorReporter));
         tabs.addTab("Address book ",
     		        new ImageIcon(cl.getResource("images/address-book.png")),
-    		        addressBookPanel = new AddressBookPanel(sendPanel, tabs));
+    		        new AddressBookPanel(sendPanel, tabs));
         contentPane.add(tabs);
 
         this.walletOps = new WalletOperations(
-            	this, tabs, dashboard, addresses, sendPanel, installationObserver, clientCaller, errorReporter);
+            	this, tabs, dashboard, addresses, sendPanel, clientCaller, errorReporter);
 
         this.setSize(new Dimension(870, 427));
 
@@ -147,26 +133,34 @@ public class ZCashUI
         JMenu file = new JMenu("Main");
         file.setMnemonic(KeyEvent.VK_M);
         int accelaratorKeyMask = Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask();
-        file.add(menuItemAbout = new JMenuItem("About...", KeyEvent.VK_T));
+        final JMenuItem menuItemAbout = new JMenuItem("About...", KeyEvent.VK_T);
+        file.add(menuItemAbout);
         menuItemAbout.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, accelaratorKeyMask));
         file.addSeparator();
-        file.add(menuItemExit = new JMenuItem("Quit", KeyEvent.VK_Q));
+        final JMenuItem menuItemExit = new JMenuItem("Quit", KeyEvent.VK_Q);
+        file.add(menuItemExit);
         menuItemExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, accelaratorKeyMask));
         mb.add(file);
 
         JMenu wallet = new JMenu("Wallet");
         wallet.setMnemonic(KeyEvent.VK_W);
-        wallet.add(menuItemBackup = new JMenuItem("Backup...", KeyEvent.VK_B));
+        final JMenuItem menuItemBackup = new JMenuItem("Backup...", KeyEvent.VK_B);
+        wallet.add(menuItemBackup);
         menuItemBackup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, accelaratorKeyMask));
-        wallet.add(menuItemEncrypt = new JMenuItem("Encrypt...", KeyEvent.VK_E));
+        final JMenuItem menuItemEncrypt = new JMenuItem("Encrypt...", KeyEvent.VK_E);
+        wallet.add(menuItemEncrypt);
         menuItemEncrypt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, accelaratorKeyMask));
-        wallet.add(menuItemExportKeys = new JMenuItem("Export private keys...", KeyEvent.VK_K));
+        final JMenuItem menuItemExportKeys = new JMenuItem("Export private keys...", KeyEvent.VK_K);
+        wallet.add(menuItemExportKeys);
         menuItemExportKeys.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, accelaratorKeyMask));
-        wallet.add(menuItemImportKeys = new JMenuItem("Import private keys...", KeyEvent.VK_I));
+        final JMenuItem menuItemImportKeys = new JMenuItem("Import private keys...", KeyEvent.VK_I);
+        wallet.add(menuItemImportKeys);
         menuItemImportKeys.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, accelaratorKeyMask));
-        wallet.add(menuItemShowPrivateKey = new JMenuItem("Show private key...", KeyEvent.VK_P));
+        final JMenuItem menuItemShowPrivateKey = new JMenuItem("Show private key...", KeyEvent.VK_P);
+        wallet.add(menuItemShowPrivateKey);
         menuItemShowPrivateKey.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, accelaratorKeyMask));
-        wallet.add(menuItemImportOnePrivateKey = new JMenuItem("Import one private key...", KeyEvent.VK_N));
+        final JMenuItem menuItemImportOnePrivateKey = new JMenuItem("Import one private key...", KeyEvent.VK_N);
+        wallet.add(menuItemImportOnePrivateKey);
         menuItemImportOnePrivateKey.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, accelaratorKeyMask));        
         mb.add(wallet);
 
@@ -183,23 +177,10 @@ public class ZCashUI
         this.setJMenuBar(mb);
 
         // Add listeners etc.
-        menuItemExit.addActionListener(
-            new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    ZCashUI.this.exitProgram();
-                }
-            }
-        );
+        menuItemExit.addActionListener(actionEvent -> ZCashUI.this.exitProgram());
 
         menuItemAbout.addActionListener(
-            new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
+                actionEvent -> {
                 	try
                 	{
                 		AboutDialog ad = new AboutDialog(ZCashUI.this);
@@ -210,129 +191,58 @@ public class ZCashUI
                 		ZCashUI.this.errorReporter.reportError(uee);
                 	}
                 }
-            }
         );
-
-        menuItemBackup.addActionListener(   
-        	new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    ZCashUI.this.walletOps.backupWallet();
-                }
-            }
-        );
-        
-        menuItemEncrypt.addActionListener(
-            new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    ZCashUI.this.walletOps.encryptWallet();
-                }
-            }
-        );
-
-        menuItemExportKeys.addActionListener(   
-            new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    ZCashUI.this.walletOps.exportWalletPrivateKeys();
-                }
-            }
-       );
-        
-       menuItemImportKeys.addActionListener(   
-            new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    ZCashUI.this.walletOps.importWalletPrivateKeys();
-                }
-            }
-       );
-       
-       menuItemShowPrivateKey.addActionListener(   
-            new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    ZCashUI.this.walletOps.showPrivateKey();
-                }
-            }
-       );
-       
-       menuItemImportOnePrivateKey.addActionListener(   
-           new ActionListener()
-           {
-               @Override
-               public void actionPerformed(ActionEvent e)
-               {
-                   ZCashUI.this.walletOps.importSinglePrivateKey();
-               }
-           }
-       );
+        menuItemBackup.addActionListener(actionEvent -> ZCashUI.this.walletOps.backupWallet());
+        menuItemEncrypt.addActionListener(actionEvent -> ZCashUI.this.walletOps.encryptWallet());
+        menuItemExportKeys.addActionListener(actionEvent -> ZCashUI.this.walletOps.exportWalletPrivateKeys());
+        menuItemImportKeys.addActionListener(actionEvent -> ZCashUI.this.walletOps.importWalletPrivateKeys());
+        menuItemShowPrivateKey.addActionListener(actionEvent -> ZCashUI.this.walletOps.showPrivateKey());
+        menuItemImportOnePrivateKey.addActionListener(actionEvent -> ZCashUI.this.walletOps.importSinglePrivateKey());
        
         // Close operation
         this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        this.addWindowListener(new WindowAdapter()
-        {
+        this.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e)
-            {
+            public void windowClosing(WindowEvent e) {
                 ZCashUI.this.exitProgram();
             }
         });
 
         // Show initial message
-        SwingUtilities.invokeLater(new Runnable()
-        {
-            public void run()
+        SwingUtilities.invokeLater(() -> {
+            try
             {
-                try
-                {
-                    String userDir = OSUtil.getSettingsDirectory();
-                    File warningFlagFile = new File(userDir + File.separator + "initialInfoShown.flag");
-                    if (warningFlagFile.exists())
-                    {
-                        return;
-                    } else
-                    {
-                        warningFlagFile.createNewFile();
-                    }
-
-                } catch (IOException ioe)
-                {
-                    /* TODO: report exceptions to the user */
-                    ioe.printStackTrace();
+                final String userDir = OSUtil.getSettingsDirectory();
+                final File warningFlagFile = new File(userDir + File.separator + "initialInfoShown.flag");
+                if (warningFlagFile.exists()) {
+                    return;
+                } else {
+                    warningFlagFile.createNewFile();
                 }
 
-                JOptionPane.showMessageDialog(
-                    ZCashUI.this.getRootPane().getParent(),
-                    "The HUSH GUI Wallet is currently considered experimental. Use of this software\n" +
-                    "comes at your own risk! Be sure to read the list of known issues and limitations\n" +
-                    "at this page: https://github.com/vaklinov/hush-swing-wallet-ui\n\n" +
-                    "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n" +
-                    "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n" +
-                    "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n" +
-                    "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n" +
-                    "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n" +
-                    "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n" +
-                    "THE SOFTWARE.\n\n" +
-                    "(This message will be shown only once)",
-                    "Disclaimer", JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException e) {
+                /* TODO: report exceptions to the user */
+                e.printStackTrace();
             }
+
+            JOptionPane.showMessageDialog(
+                ZCashUI.this.getRootPane().getParent(),
+                "The HUSH GUI Wallet is currently considered experimental. Use of this software\n" +
+                "comes at your own risk! Be sure to read the list of known issues and limitations\n" +
+                "at this page: https://github.com/vaklinov/hush-swing-wallet-ui\n\n" +
+                "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n" +
+                "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n" +
+                "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n" +
+                "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n" +
+                "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n" +
+                "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n" +
+                "THE SOFTWARE.\n\n" +
+                "(This message will be shown only once)",
+                "Disclaimer", JOptionPane.INFORMATION_MESSAGE);
         });
         
         // Finally dispose of the progress dialog
-        if (progressDialog != null)
-        {
+        if (progressDialog != null) {
         	progressDialog.doDispose();
         }
     }
@@ -394,16 +304,14 @@ public class ZCashUI
             	// This font looks good but on Windows 7 it misses some chars like the stars...
             	//FontUIResource font = new FontUIResource("Lucida Sans Unicode", Font.PLAIN, 11);
             	//UIManager.put("Table.font", font);
-            } else
-            {            
+            } else {
 	            for (LookAndFeelInfo ui : UIManager.getInstalledLookAndFeels())
 	            {
 	                System.out.println("Available look and feel: " + ui.getName() + " " + ui.getClassName());
-	                if (ui.getName().equals("Nimbus"))
-	                {
+	                if (ui.getName().equals("Nimbus")) {
 	                    UIManager.setLookAndFeel(ui.getClassName());
 	                    break;
-	                };
+	                }
 	            }
             }
             
@@ -431,8 +339,8 @@ public class ZCashUI
             	}
             } catch (WalletCallException wce)
             {
-                if ((wce.getMessage().indexOf("{\"code\":-28") != -1) || // Started but not ready
-                	(wce.getMessage().indexOf("error code: -28") != -1))
+                if ((wce.getMessage().contains("{\"code\":-28")) || // Started but not ready
+                	(wce.getMessage().contains("error code: -28")))
                 {
                 	System.out.println("hushd is currently starting...");
                 	daemonStartInProgress = true;
@@ -469,8 +377,8 @@ public class ZCashUI
         {
             wce.printStackTrace();
 
-            if ((wce.getMessage().indexOf("{\"code\":-28,\"message\"") != -1) ||
-            	(wce.getMessage().indexOf("error code: -28") != -1))
+            if ((wce.getMessage().contains("{\"code\":-28,\"message\"")) ||
+            	(wce.getMessage().contains("error code: -28")))
             {
                 JOptionPane.showMessageDialog(
                         null,
@@ -507,16 +415,18 @@ public class ZCashUI
     }
     
     
-    public static void redirectLoggingToFile()
+    private static void redirectLoggingToFile()
     	throws IOException
     {
 		// Initialize log to a file
 		String settingsDir = OSUtil.getSettingsDirectory();
-		Date today = new Date();
+		final Date today = new Date();
+        final Calendar calendar = Calendar.getInstance();
+        calendar.setTime(today);
+        System.out.println(calendar.get(Calendar.YEAR));
 		String logFile = settingsDir + File.separator + 
 				         "HUSHWallet_" +
-				         (int)(today.getYear() + 1900) + "_" +
-				         (int)(today.getMonth() + 1) + "_" +
+				         calendar.get(Calendar.YEAR) + "_" + (calendar.get(Calendar.MONTH) + 1) + "_" +
 				         "debug.log";
 		PrintStream fileOut = new PrintStream(new FileOutputStream(logFile, true));
 		
@@ -530,7 +440,7 @@ public class ZCashUI
     }
     
     
-    public static void possiblyCreateHUSHConfigFile()
+    private static void possiblyCreateHUSHConfigFile()
         throws IOException
     {
     	String blockchainDir = OSUtil.getBlockchainDirectory();

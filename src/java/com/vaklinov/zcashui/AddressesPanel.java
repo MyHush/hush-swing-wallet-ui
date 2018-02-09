@@ -36,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -124,105 +125,65 @@ public class AddressesPanel
 		addressesPanel.add(warningPanel, BorderLayout.NORTH);
 		
 		// Thread and timer to update the address/balance table
-		this.balanceGatheringThread = new DataGatheringThread<String[][]>(
-			new DataGatheringThread.DataGatherer<String[][]>() 
-			{
-				public String[][] gatherData()
-					throws Exception
-				{
-					long start = System.currentTimeMillis();
-					String[][] data = AddressesPanel.this.getAddressBalanceDataFromWallet();
-					long end = System.currentTimeMillis();
-					System.out.println("Gathering of address/balance table data done in " + (end - start) + "ms." );
-					
-				    return data;
-				}
-			}, 
-			this.errorReporter, 25000);
+		this.balanceGatheringThread = new DataGatheringThread<>(
+				() -> {
+                    long start = System.currentTimeMillis();
+                    String[][] data = AddressesPanel.this.getAddressBalanceDataFromWallet();
+                    long end = System.currentTimeMillis();
+                    System.out.println("Gathering of address/balance table data done in " + (end - start) + "ms.");
+
+                    return data;
+                },
+				this.errorReporter, 25000
+		);
 		this.threads.add(this.balanceGatheringThread);
 		
-		ActionListener alBalances = new ActionListener() 
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				try
-				{					
-					AddressesPanel.this.updateWalletAddressBalanceTableAutomated();
-				} catch (Exception ex)
-				{
-					ex.printStackTrace();
-					AddressesPanel.this.errorReporter.reportError(ex);
-				}
-			}
-		};
-		Timer t = new Timer(5000, alBalances);
-		t.start();
-		this.timers.add(t);
+		ActionListener alBalances = actionEvent -> {
+            try {
+                AddressesPanel.this.updateWalletAddressBalanceTableAutomated();
+            } catch (final Exception e) {
+                e.printStackTrace();
+                AddressesPanel.this.errorReporter.reportError(e);
+            }
+        };
+		final Timer timer = new Timer(5000, alBalances);
+		timer.start();
+		this.timers.add(timer);
 		
 		// Button actions
-		refreshButton.addActionListener(new ActionListener() 
-		{	
-			public void actionPerformed(ActionEvent e) 
-			{
-				Cursor oldCursor = null;
-				try
-				{
-					// TODO: dummy progress bar ... maybe
-					oldCursor = AddressesPanel.this.getCursor();
-					AddressesPanel.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-					
-					AddressesPanel.this.updateWalletAddressBalanceTableInteractive();
-					
-					AddressesPanel.this.setCursor(oldCursor);
-				} catch (Exception ex)
-				{
-					if (oldCursor != null)
-					{
-						AddressesPanel.this.setCursor(oldCursor);
-					}
-					
-					ex.printStackTrace();
-					AddressesPanel.this.errorReporter.reportError(ex, false);
-				}
-			}
-		});
+		refreshButton.addActionListener(e -> {
+            Cursor oldCursor = null;
+            try {
+                // TODO: dummy progress bar ... maybe
+                oldCursor = AddressesPanel.this.getCursor();
+                AddressesPanel.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+                AddressesPanel.this.updateWalletAddressBalanceTableInteractive();
+
+                AddressesPanel.this.setCursor(oldCursor);
+            } catch (Exception ex) {
+                if (oldCursor != null) {
+                    AddressesPanel.this.setCursor(oldCursor);
+                }
+
+                ex.printStackTrace();
+                AddressesPanel.this.errorReporter.reportError(ex, false);
+            }
+        });
 		
-		newTAddressButton.addActionListener(new ActionListener() 
-		{	
-			public void actionPerformed(ActionEvent e) 
-			{
-				createNewAddress(false);
-			}
-		});
-		
-		newZAddressButton.addActionListener(new ActionListener() 
-		{	
-			public void actionPerformed(ActionEvent e) 
-			{
-				createNewAddress(true);
-			}
-		});
-		
+		newTAddressButton.addActionListener(actionEvent -> createNewAddress(false));
+		newZAddressButton.addActionListener(actionEvent -> createNewAddress(true));
 	}
-	
 	
 	// Null if not selected
-	public String getSelectedAddress()
-	{
-		String address = null;
-		
-		int selectedRow = this.addressBalanceTable.getSelectedRow();
-		
-		if (selectedRow != -1)
-		{
-			address = this.addressBalanceTable.getModel().getValueAt(selectedRow, 2).toString();
+	public String getSelectedAddress() {
+		final int selectedRow = this.addressBalanceTable.getSelectedRow();
+		if (selectedRow != -1) {
+			return this.addressBalanceTable.getModel().getValueAt(selectedRow, 2).toString();
 		}
-		
-		return address;
+		return null;
 	}
 
-	
 	private void createNewAddress(boolean isZAddress)
 	{
 		try
@@ -314,9 +275,7 @@ public class AddressesPanel
 	}
 
 
-	private JTable createAddressBalanceTable(String rowData[][])
-		throws WalletCallException, IOException, InterruptedException
-	{
+	private JTable createAddressBalanceTable(String rowData[][]) {
 		String columnNames[] = { "Balance", "Confirmed?", "Address" };
         JTable table = new AddressTable(rowData, columnNames, this.clientCaller);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
@@ -337,18 +296,12 @@ public class AddressesPanel
 		// T Addresses listed with the list received by addr comamnd
 		String[] tAddresses = this.clientCaller.getWalletAllPublicAddresses();
 		Set<String> tStoredAddressSet = new HashSet<>();
-		for (String address : tAddresses)
-		{
-			tStoredAddressSet.add(address);
-		}
+		Collections.addAll(tStoredAddressSet, tAddresses);
 		
 		// T addresses with unspent outputs - just in case they are different
 		String[] tAddressesWithUnspentOuts = this.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
 		Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
-		for (String address : tAddressesWithUnspentOuts)
-		{
-			tAddressSetWithUnspentOuts.add(address);
-		}
+		Collections.addAll(tAddressSetWithUnspentOuts, tAddressesWithUnspentOuts);
 		
 		// Combine all known T addresses
 		Set<String> tAddressesCombined = new HashSet<>();

@@ -42,10 +42,9 @@ import java.util.Locale;
 public class OSUtil
 {
 
-	public static enum OS_TYPE
-	{
+	public enum OS_TYPE {
 		LINUX, WINDOWS, MAC_OS, FREE_BSD, OTHER_BSD, SOLARIS, AIX, OTHER_UNIX, OTHER_OS
-	};
+	}
 	
 	
 	public static boolean isUnixLike(OS_TYPE os)
@@ -68,49 +67,31 @@ public class OSUtil
 	{
 		String name = System.getProperty("os.name").toLowerCase(Locale.ROOT);
 		
-		if (name.contains("linux"))
-		{
+		if (name.contains("linux")) {
 			return OS_TYPE.LINUX;
-		} else if (name.contains("windows"))
-		{
+		} else if (name.contains("windows")) {
 			return OS_TYPE.WINDOWS;
-		} else if (name.contains("sunos") || name.contains("solaris"))
-		{
+		} else if (name.contains("sunos") || name.contains("solaris")) {
 			return OS_TYPE.SOLARIS;
-		} else if (name.contains("darwin") || name.contains("mac os") || name.contains("macos"))
-		{
+		} else if (name.contains("darwin") || name.contains("mac os") || name.contains("macos")) {
 			return OS_TYPE.MAC_OS;
-		} else if (name.contains("free") && name.contains("bsd"))
-		{
+		} else if (name.contains("free") && name.contains("bsd")) {
 			return OS_TYPE.FREE_BSD;
-		} else if ((name.contains("open") || name.contains("net")) && name.contains("bsd"))
-		{
+		} else if ((name.contains("open") || name.contains("net")) && name.contains("bsd")) {
 			return OS_TYPE.OTHER_BSD;
-		} else if (name.contains("aix"))
-		{
+		} else if (name.contains("aix")) {
 			return OS_TYPE.AIX;
-		} else if (name.contains("unix"))
-		{
+		} else if (name.contains("unix")) {
 			return OS_TYPE.OTHER_UNIX;
-		} else
-		{
+		} else {
 			return OS_TYPE.OTHER_OS;
 		}
 	}
-	
-	
+
+
 	// Returns the name of the zcashd server - may vary depending on the OS.
-	public static String getZCashd()
-	{
-		String zcashd = "hushd";
-		
-		OS_TYPE os = getOSType();
-		if (os == OS_TYPE.WINDOWS)
-		{
-			zcashd += ".exe";
-		}
-		
-		return zcashd;
+	public static String getZCashd() {
+		return "hushd" + ((getOSType() == OS_TYPE.WINDOWS) ? ".exe" : "");
 	}
 	
 	
@@ -137,7 +118,7 @@ public class OSUtil
 		// if program is repackaged as different JAR!
 		final String JAR_NAME = "HUSHSwingWalletUI.jar";
 		String cp = System.getProperty("java.class.path");
-		if ((cp != null) && (cp.indexOf(File.pathSeparator) == -1) &&
+		if ((cp != null) && (!cp.contains(File.pathSeparator)) &&
 			(cp.endsWith(JAR_NAME)))
 		{
 			File pd = new File(cp.substring(0, cp.length() - JAR_NAME.length()));
@@ -166,9 +147,7 @@ public class OSUtil
 	}
 	
 	
-	public static File getUserHomeDirectory()
-		throws IOException
-	{
+	public static File getUserHomeDirectory() {
         return new File(System.getProperty("user.home"));
 	}
 
@@ -177,16 +156,14 @@ public class OSUtil
 		throws IOException
 	{
 		OS_TYPE os = getOSType();
-		
-		if (os == OS_TYPE.MAC_OS)
-		{
-			return new File(System.getProperty("user.home") + "/Library/Application Support/Hush").getCanonicalPath();
-		} else if (os == OS_TYPE.WINDOWS)
-		{
-			return new File(System.getenv("APPDATA") + "\\Hush").getCanonicalPath();
-		} else
-		{
-			return new File(System.getProperty("user.home") + "/.hush").getCanonicalPath();
+
+		switch (os) {
+			case MAC_OS:
+				return new File(System.getProperty("user.home") + "/Library/Application Support/Hush").getCanonicalPath();
+			case WINDOWS:
+				return new File(System.getenv("APPDATA") + "\\Hush").getCanonicalPath();
+			default:
+				return new File(System.getProperty("user.home") + "/.hush").getCanonicalPath();
 		}
 	}
 
@@ -198,17 +175,18 @@ public class OSUtil
 	    File userHome = new File(System.getProperty("user.home"));
 	    File dir;
 	    OS_TYPE os = getOSType();
-	    
-	    if (os == OS_TYPE.MAC_OS)
-	    {
-	        dir = new File(userHome, "Library/Application Support/HUSHSwingWalletUI");
-	    } else if (os == OS_TYPE.WINDOWS)
-		{
-			dir = new File(System.getenv("LOCALAPPDATA") + "\\HUSHSwingWalletUI");
-		} else
-	    {
-	        dir = new File(userHome.getCanonicalPath() + File.separator + ".HUSHSwingWalletUI");
-	    }
+
+		switch (os) {
+			case MAC_OS:
+				dir = new File(userHome, "Library/Application Support/HUSHSwingWalletUI");
+				break;
+			case WINDOWS:
+				dir = new File(System.getenv("LOCALAPPDATA") + "\\HUSHSwingWalletUI");
+				break;
+			default:
+				dir = new File(userHome.getCanonicalPath() + File.separator + ".HUSHSwingWalletUI");
+				break;
+		}
 	    
 		if (!dir.exists())
 		{
@@ -226,20 +204,20 @@ public class OSUtil
 		throws IOException, InterruptedException
 	{
 		OS_TYPE os = getOSType();
-		
-		if (os == OS_TYPE.MAC_OS)
-		{
-			CommandExecutor uname = new CommandExecutor(new String[] { "uname", "-sr" });
-		    return uname.execute() + "; " + 
-		           System.getProperty("os.name") + " " + System.getProperty("os.version");
-		} else if (os == OS_TYPE.WINDOWS)
-		{
-			// TODO: More detailed Windows information
-			return System.getProperty("os.name");
-		} else
-		{
-			CommandExecutor uname = new CommandExecutor(new String[] { "uname", "-srv" });
-		    return uname.execute();
+
+		switch (os) {
+			case MAC_OS: {
+				CommandExecutor uname = new CommandExecutor(new String[]{ "uname", "-sr" });
+				return uname.execute() + "; " +
+							   System.getProperty("os.name") + " " + System.getProperty("os.version");
+			}
+			case WINDOWS:
+				// TODO: More detailed Windows information
+				return System.getProperty("os.name");
+			default: {
+				CommandExecutor uname = new CommandExecutor(new String[]{ "uname", "-srv" });
+				return uname.execute();
+			}
 		}
 	}
 

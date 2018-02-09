@@ -36,9 +36,9 @@ import javax.swing.JOptionPane;
  * 
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class StatusUpdateErrorReporter 
+class StatusUpdateErrorReporter
 {	
-	private JFrame parent;
+	private final JFrame parent;
 	private long lastReportedErrroTime = 0;
 	
 	public StatusUpdateErrorReporter(JFrame parent)

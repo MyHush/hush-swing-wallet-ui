@@ -31,8 +31,6 @@ package com.vaklinov.zcashui;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.LineNumberReader;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
@@ -80,16 +78,12 @@ public class ZCashClientCaller
 	}
 
 
-	public static class WalletCallException
-		extends Exception
-	{
-		public WalletCallException(String message)
-		{
+	static class WalletCallException extends Exception {
+		WalletCallException(final String message) {
 			super(message);
 		}
 
-		public WalletCallException(String message, Throwable cause)
-		{
+		WalletCallException(final String message, final Throwable cause) {
 			super(message, cause);
 		}
 	}
@@ -134,8 +128,7 @@ public class ZCashClientCaller
 
 	
 	public synchronized Process startDaemon() 
-		throws IOException, InterruptedException 
-	{
+		throws IOException {
 		String exportDir = OSUtil.getUserHomeDirectory().getCanonicalPath();
 		
 	    CommandExecutor starter = new CommandExecutor(
@@ -161,8 +154,7 @@ public class ZCashClientCaller
 	
 
 	public synchronized JsonObject getDaemonRawRuntimeInfo() 
-		throws IOException, InterruptedException, WalletCallException 
-	{
+		throws IOException, InterruptedException {
 	    CommandExecutor infoGetter = new CommandExecutor(
 	            new String[] { zcashcli.getCanonicalPath(), "getinfo"} );
 	    String info = infoGetter.execute();
@@ -276,7 +268,7 @@ public class ZCashClientCaller
 	{
 		String[] zAddresses = this.getWalletZAddresses();
 
-		List<String[]> zReceivedTransactions = new ArrayList<String[]>();
+		List<String[]> zReceivedTransactions = new ArrayList<>();
 
 		for (String zAddress : zAddresses)
 		{
@@ -346,7 +338,7 @@ public class ZCashClientCaller
 		JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
 			"gettransaction", wrapStringParameter(txID));
 
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new HashMap<>();
 
 		for (String name : jsonTransaction.names())
 		{
@@ -406,7 +398,7 @@ public class ZCashClientCaller
 
 
 	// return UNIX time as tring
-	public synchronized String getWalletTransactionTime(String txID)
+	private synchronized String getWalletTransactionTime(String txID)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
@@ -416,7 +408,7 @@ public class ZCashClientCaller
 	}
 	
 	
-	public synchronized String getWalletTransactionConfirmations(String txID)
+	private synchronized String getWalletTransactionConfirmations(String txID)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
@@ -633,7 +625,7 @@ public class ZCashClientCaller
 		String strBlockCount = this.executeCommandAndGetSingleStringResponse("getblockcount");
 		String lastBlockHash = this.executeCommandAndGetSingleStringResponse("getblockhash", strBlockCount.trim());
 		JsonObject lastBlock = this.executeCommandAndGetJsonObject("getblock", wrapStringParameter(lastBlockHash.trim()));
-		info.lastBlockDate = new Date(Long.valueOf(lastBlock.getLong("time", -1) * 1000L));
+		info.lastBlockDate = new Date(lastBlock.getLong("time", -1) * 1000L);
 
 		return info;
 	}
@@ -697,7 +689,7 @@ public class ZCashClientCaller
 
    			 JsonObject respObject = response.asObject();
    			 if ((respObject.getDouble("code", -1) == -15) &&
-   				 (respObject.getString("message", "ERR").indexOf("unencrypted wallet") != -1))
+   				 (respObject.getString("message", "ERR").contains("unencrypted wallet")))
    			 {
    				 // Obviously unencrupted
    				 return false;
@@ -709,7 +701,7 @@ public class ZCashClientCaller
     	 {
    			 JsonObject respObject = Util.getJsonErrorMessage(strResult);
    			 if ((respObject.getDouble("code", -1) == -15) &&
-   				 (respObject.getString("message", "ERR").indexOf("unencrypted wallet") != -1))
+   				 (respObject.getString("message", "ERR").contains("unencrypted wallet")))
    			 {
    				 // Obviously unencrupted
    				 return false;
@@ -826,7 +818,7 @@ public class ZCashClientCaller
 
   			 JsonObject respObject = response.asObject();
   			 if ((respObject.getDouble("code", +123) == -1) &&
-  				 (respObject.getString("message", "ERR").indexOf("wrong network type") != -1))
+  				 (respObject.getString("message", "ERR").contains("wrong network type")))
   			 {
   				 // Obviously T address - do nothing here
   			 } else
@@ -837,7 +829,7 @@ public class ZCashClientCaller
 		{
  			 JsonObject respObject = Util.getJsonErrorMessage(strResult);
  			 if ((respObject.getDouble("code", +123) == -1) &&
- 				 (respObject.getString("message", "ERR").indexOf("wrong network type") != -1))
+ 				 (respObject.getString("message", "ERR").contains("wrong network type")))
  			 {
  				 // Obviously T address - do nothing here
  			 } else

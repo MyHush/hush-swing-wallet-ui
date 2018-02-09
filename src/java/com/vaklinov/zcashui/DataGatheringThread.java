@@ -39,16 +39,14 @@ package com.vaklinov.zcashui;
  * 
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class DataGatheringThread<T>
-	extends Thread
-{	
+class DataGatheringThread<T> extends Thread {
 	/**
 	 * All implementations must provide an impl. of this interface to 
 	 * gather the actual data.
 	 * 
 	 * @param <T> the type of data that is gathered.
 	 */
-	public static interface DataGatherer<T>
+	public interface DataGatherer<T>
 	{
 		T gatherData()
 			throws Exception;
@@ -62,7 +60,7 @@ public class DataGatheringThread<T>
 	// Interval in ms for gathering
 	private int interval;
 	// Fag to run immediately - no wait
-	boolean doAFirstGatehring;
+	private boolean doAFirstGathering;
 	// Error reporter
 	private StatusUpdateErrorReporter errorReporter;
 	// Flag allowing the thread to be suspended
@@ -88,13 +86,14 @@ public class DataGatheringThread<T>
 	 * @param interval Interval in ms for gathering
 	 */
 	public DataGatheringThread(DataGatherer<T> gatherer, StatusUpdateErrorReporter errorReporter, 
-			                   int interval, boolean doAFirstGatehring)
+			                   int interval, boolean doAFirstGathering
+							  )
 	{
 		this.suspended = false;
 		this.gatherer = gatherer;
 		this.errorReporter = errorReporter;
 		this.interval = interval;
-		this.doAFirstGatehring = doAFirstGatehring;
+		this.doAFirstGathering = doAFirstGathering;
 		
 		this.lastGatheredData = null;
 				
@@ -131,18 +130,15 @@ public class DataGatheringThread<T>
 	@Override
 	public void run()
 	{
-		if (this.doAFirstGatehring && (!this.suspended))
+		if (this.doAFirstGathering && (!this.suspended))
 		{
 			this.doOneGathering();
 		}
 		
-		mainLoop:
-		while (true)
-		{
-			synchronized (this) 
-			{
+		while (true) {
+			synchronized (this) {
 				long startWait = System.currentTimeMillis();
-				long endWait = startWait;
+				long endWait;
 				do
 				{
 					try
@@ -158,13 +154,10 @@ public class DataGatheringThread<T>
 				} while ((endWait - startWait) <= this.interval);
 			}
 			
-			if (!this.suspended)
-			{
-				this.doOneGathering();
-			} else
-			{
-				break mainLoop;
+			if (this.suspended) {
+				break;
 			}
+			this.doOneGathering();
 		}
 	} // End public void run()
 	

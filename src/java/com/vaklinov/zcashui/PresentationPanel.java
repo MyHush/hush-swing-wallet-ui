@@ -39,24 +39,21 @@ import java.awt.Stroke;
 
 import javax.swing.JPanel;
 
-
 /**
  * Panel with gradient background etc. for pretty label presentations.
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class PresentationPanel 
-	extends JPanel 
-{
-	static final int GRADIENT_EXTENT = 17;
+class PresentationPanel extends JPanel {
+	private static final int GRADIENT_EXTENT = 17;
 
-	static final Color  colorBorder = new Color(140, 145, 145);
-	static final Color  colorLow    = new Color(250, 250, 250);
-	static final Color  colorHigh   = new Color(225, 225, 230);
-	static final Stroke edgeStroke  = new BasicStroke(1);
+	private static final Color  colorBorder = new Color(140, 145, 145);
+	private static final Color  colorLow    = new Color(250, 250, 250);
+	private static final Color  colorHigh   = new Color(225, 225, 230);
+	private static final Stroke edgeStroke  = new BasicStroke(1);
 
 	
-	public PresentationPanel()
+	PresentationPanel()
 	{
 		this.setLayout(new FlowLayout(FlowLayout.LEFT, 6, 6));
 	}

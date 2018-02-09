@@ -39,7 +39,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 
@@ -56,30 +55,24 @@ public class WalletOperations
 	private DashboardPanel dashboard;
 	private SendCashPanel  sendCash;
 	private AddressesPanel addresses;
-	
-	private ZCashInstallationObserver installationObserver;
+
 	private ZCashClientCaller         clientCaller;
 	private StatusUpdateErrorReporter errorReporter;
 
 
-	public WalletOperations(ZCashUI parent,
+	WalletOperations(ZCashUI parent,
 			                JTabbedPane tabs,
 			                DashboardPanel dashboard,
 			                AddressesPanel addresses,
 			                SendCashPanel  sendCash,
-			                
-			                ZCashInstallationObserver installationObserver, 
 			                ZCashClientCaller clientCaller,
-			                StatusUpdateErrorReporter errorReporter) 
-        throws IOException, InterruptedException, WalletCallException 
-	{
+			                StatusUpdateErrorReporter errorReporter) {
 		this.parent    = parent;
 		this.tabs      = tabs;
 		this.dashboard = dashboard;
 		this.addresses = addresses;
 		this.sendCash  = sendCash;
-		
-		this.installationObserver = installationObserver;
+
 		this.clientCaller = clientCaller;
 		this.errorReporter = errorReporter;
 	}

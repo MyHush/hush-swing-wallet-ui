@@ -32,8 +32,6 @@ package com.vaklinov.zcashui;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -43,7 +41,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 
@@ -56,21 +53,13 @@ import javax.swing.JTextField;
 public class SingleKeyImportDialog
 	extends JDialog
 {
-	protected boolean isOKPressed = false;
-	protected String  key    = null;
+	private JTextField keyField;
+	private JProgressBar progress;
 	
-	protected JLabel     keyLabel = null;
-	protected JTextField keyField = null;
+	private ZCashClientCaller caller;
 	
-	protected JLabel upperLabel;
-	protected JLabel lowerLabel;
-	
-	protected JProgressBar progress = null;
-	
-	protected ZCashClientCaller caller;
-	
-	JButton okButon;
-	JButton cancelButon;
+	private JButton okButton;
+	private JButton cancelButon;
 		
 	public SingleKeyImportDialog(JFrame parent, ZCashClientCaller caller)
 	{
@@ -87,9 +76,7 @@ public class SingleKeyImportDialog
 		controlsPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
 		JPanel tempPanel = new JPanel(new BorderLayout(0, 0));
-		tempPanel.add(this.upperLabel = new JLabel(
-			"<html>Please enter a single private key to import." +
-		    "</html>"), BorderLayout.CENTER);
+		tempPanel.add(new JLabel("<html>Please enter a single private key to import.</html>"), BorderLayout.CENTER);
 		controlsPanel.add(tempPanel);
 		
 		JLabel dividerLabel = new JLabel("   ");
@@ -97,7 +84,7 @@ public class SingleKeyImportDialog
 		controlsPanel.add(dividerLabel);
 		
 		tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		tempPanel.add(keyLabel = new JLabel("Key: "));
+		tempPanel.add(new JLabel("Key: "));
 		tempPanel.add(keyField = new JTextField(60));
 		controlsPanel.add(tempPanel);
 		
@@ -106,12 +93,14 @@ public class SingleKeyImportDialog
 		controlsPanel.add(dividerLabel);
 
 		tempPanel = new JPanel(new BorderLayout(0, 0));
-		tempPanel.add(this.lowerLabel = new JLabel(
-			"<html><span style=\"font-weight:bold\">" + 
-		    "Warning:</span> Private key import is a slow operation that " +
-		    "requires blockchain rescanning (may take many minutes). The GUI " +
-			"will not be usable for other functions during this time</html>"), 
-			BorderLayout.CENTER);
+		tempPanel.add(new JLabel(
+				"<html><span style=\"font-weight:bold\">" +
+				"Warning:</span> Private key import is a slow operation that " +
+				"requires blockchain rescanning (may take many minutes). The GUI " +
+				"will not be usable for other functions during this time</html>"
+			),
+			BorderLayout.CENTER
+		 );
 		controlsPanel.add(tempPanel);
 		
 		dividerLabel = new JLabel("   ");
@@ -128,34 +117,19 @@ public class SingleKeyImportDialog
 		// Form buttons
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 3, 3));
-		okButon = new JButton("Import");
-		buttonPanel.add(okButon);
+		okButton = new JButton("Import");
+		buttonPanel.add(okButton);
 		buttonPanel.add(new JLabel("   "));
 		cancelButon = new JButton("Cancel");
 		buttonPanel.add(cancelButon);
 		this.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
-		okButon.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				SingleKeyImportDialog.this.processOK();
-			}
-		});
+		okButton.addActionListener(e -> SingleKeyImportDialog.this.processOK());
 		
-		cancelButon.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				SingleKeyImportDialog.this.setVisible(false);
-				SingleKeyImportDialog.this.dispose();
-				
-				SingleKeyImportDialog.this.isOKPressed = false;
-				SingleKeyImportDialog.this.key = null;
-			}
-		});
+		cancelButon.addActionListener(e -> {
+            SingleKeyImportDialog.this.setVisible(false);
+            SingleKeyImportDialog.this.dispose();
+        });
 		
 		this.setSize(740, 210);
 		this.validate();
@@ -175,65 +149,45 @@ public class SingleKeyImportDialog
 				JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		
-		SingleKeyImportDialog.this.isOKPressed = true;
-		SingleKeyImportDialog.this.key = key;
 				
 		// Start import
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		this.progress.setIndeterminate(true);
 		this.progress.setValue(1);
 			
-		this.okButon.setEnabled(false);
+		this.okButton.setEnabled(false);
 		this.cancelButon.setEnabled(false);
 		
 		SingleKeyImportDialog.this.keyField.setEditable(false);
 			
-		new Thread(new Runnable() 
-		{
-			@Override
-			public void run() 
-			{
-				try
-				{
-					SingleKeyImportDialog.this.caller.importPrivateKey(key);
-			    
-					JOptionPane.showMessageDialog(
-							SingleKeyImportDialog.this,  
-							"The private key:\n" +
-							key + "\n" +
-							"has been imported successfully.",
-							"Private key imported successfully...",
-							JOptionPane.INFORMATION_MESSAGE);		
-				} catch (Exception e)
-				{
-					e.printStackTrace();
-					
-					JOptionPane.showMessageDialog(
-						SingleKeyImportDialog.this.getRootPane().getParent(), 
-						"An error occurred when importing private key. Error message is:\n" +
-						e.getClass().getName() + ":\n" + e.getMessage() + "\n\n" +
-						"Please ensure that hushd is running and the key is in the correct \n" + 
-						"form. You may try again later...\n", 
-						"Error in importing private key", JOptionPane.ERROR_MESSAGE);
-				} finally
-				{
-					SingleKeyImportDialog.this.setVisible(false);
-					SingleKeyImportDialog.this.dispose();
-				}
-			}
-		}).start();
-	}
-	
-	
-	public boolean isOKPressed()
-	{
-		return this.isOKPressed;
-	}
-	
-	
-	public String getKey()
-	{
-		return this.key;
+		new Thread(() -> {
+            try
+            {
+                SingleKeyImportDialog.this.caller.importPrivateKey(key);
+
+                JOptionPane.showMessageDialog(
+                        SingleKeyImportDialog.this,
+                        "The private key:\n" +
+                        key + "\n" +
+                        "has been imported successfully.",
+                        "Private key imported successfully...",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e)
+            {
+                e.printStackTrace();
+
+                JOptionPane.showMessageDialog(
+                    SingleKeyImportDialog.this.getRootPane().getParent(),
+                    "An error occurred when importing private key. Error message is:\n" +
+                    e.getClass().getName() + ":\n" + e.getMessage() + "\n\n" +
+                    "Please ensure that hushd is running and the key is in the correct \n" +
+                    "form. You may try again later...\n",
+                    "Error in importing private key", JOptionPane.ERROR_MESSAGE);
+            } finally
+            {
+                SingleKeyImportDialog.this.setVisible(false);
+                SingleKeyImportDialog.this.dispose();
+            }
+        }).start();
 	}
 }

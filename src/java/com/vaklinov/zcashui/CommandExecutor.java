@@ -29,7 +29,6 @@
 package com.vaklinov.zcashui;
 
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -44,9 +43,7 @@ public class CommandExecutor
 {	
 	private String args[];
 	
-	public CommandExecutor(String args[])
-		throws IOException
-	{
+	public CommandExecutor(String args[]) {
 		this.args = args;
 	}		
 	

@@ -215,9 +215,7 @@ public class TransactionTable
 	private static class DetailsDialog
 		extends JDialog
 	{
-		public DetailsDialog(JFrame parent, Map<String, String> details)
-			throws UnsupportedEncodingException
-		{
+		public DetailsDialog(JFrame parent, Map<String, String> details) {
 			this.setTitle("Transaction details...");
 			this.setSize(600,  310);
 		    this.setLocation(100, 100);

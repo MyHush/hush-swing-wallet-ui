@@ -2,7 +2,6 @@
 // Taken from repository https://github.com/zlatinb/zcash-swing-wallet-ui under an MIT licemse
 package com.vaklinov.zcashui;
 
-import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -21,13 +20,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -102,8 +98,7 @@ public class AddressBookPanel extends JPanel {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // one at a time
         table.getSelectionModel().addListSelectionListener(new AddressListSelectionListener());
         table.addMouseListener(new AddressMouseListener());
-        JScrollPane scrollPane = new JScrollPane(table);
-        return scrollPane;
+        return new JScrollPane(table);
     }
 
     public AddressBookPanel(SendCashPanel sendCashPanel, JTabbedPane tabs) throws IOException {

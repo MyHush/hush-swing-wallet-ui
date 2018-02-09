@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -59,15 +58,12 @@ import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 import com.vaklinov.zcashui.ZCashInstallationObserver.DAEMON_STATUS;
 import com.vaklinov.zcashui.ZCashInstallationObserver.DaemonInfo;
 
-
 /**
  * Dashboard ...
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class DashboardPanel
-	extends WalletTabPanel
-{
+class DashboardPanel extends WalletTabPanel {
 	private JFrame parentFrame;
 	private ZCashInstallationObserver installationObserver;
 	private ZCashClientCaller clientCaller;
@@ -86,7 +82,6 @@ public class DashboardPanel
 	private JLabel walletBalanceLabel  = null;
 	private DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
 	
-	private JTable transactionsTable   = null;
 	private JScrollPane transactionsTablePane  = null;
 	private String[][] lastTransactionsData = null;
 	private DataGatheringThread<String[][]> transactionGatheringThread = null;
@@ -103,8 +98,8 @@ public class DashboardPanel
 		this.clientCaller = clientCaller;
 		this.errorReporter = errorReporter;
 		
-		this.timers = new ArrayList<Timer>();
-		this.threads = new ArrayList<DataGatheringThread<?>>();
+		this.timers = new ArrayList<>();
+		this.threads = new ArrayList<>();
 
 		// Build content
 		JPanel dashboard = this;
@@ -141,9 +136,7 @@ public class DashboardPanel
 
 		// Table of transactions
 		lastTransactionsData = getTransactionsDataFromWallet();
-		dashboard.add(transactionsTablePane = new JScrollPane(
-				         transactionsTable = this.createTransactionsTable(lastTransactionsData)),
-				      BorderLayout.CENTER);
+		dashboard.add(transactionsTablePane = new JScrollPane(this.createTransactionsTable(lastTransactionsData)), BorderLayout.CENTER);
 
 		// Lower panel with installation status
 		JPanel installationStatusPanel = new JPanel();
@@ -160,65 +153,52 @@ public class DashboardPanel
 		dashboard.add(installationStatusPanel, BorderLayout.SOUTH);
 
 		// Thread and timer to update the daemon status
-		this.daemonInfoGatheringThread = new DataGatheringThread<DaemonInfo>(
-			new DataGatheringThread.DataGatherer<DaemonInfo>() 
-			{
-				public DaemonInfo gatherData()
-					throws Exception
-				{
-					long start = System.currentTimeMillis();
-					DaemonInfo daemonInfo = DashboardPanel.this.installationObserver.getDaemonInfo();
-					long end = System.currentTimeMillis();
-					System.out.println("Gathering of dashboard daemon status data done in " + (end - start) + "ms." );
-					
-					return daemonInfo;
-				}
-			}, 
-			this.errorReporter, 2000, true);
+		this.daemonInfoGatheringThread = new DataGatheringThread<>(
+				() -> {
+                    long start = System.currentTimeMillis();
+                    DaemonInfo daemonInfo = DashboardPanel.this.installationObserver.getDaemonInfo();
+                    long end = System.currentTimeMillis();
+                    System.out.println("Gathering of dashboard daemon status data done in " + (end - start) + "ms.");
+
+                    return daemonInfo;
+                },
+				this.errorReporter, 2000, true
+		);
 		this.threads.add(this.daemonInfoGatheringThread);
 		
-		ActionListener alDeamonStatus = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				try
-				{
-					DashboardPanel.this.updateDaemonStatusLabel();
-				} catch (Exception ex)
-				{
-					ex.printStackTrace();
-					DashboardPanel.this.errorReporter.reportError(ex);
-				}
-			}
-		};
+		ActionListener alDeamonStatus = actionEvent -> {
+            try
+            {
+                DashboardPanel.this.updateDaemonStatusLabel();
+            } catch (Exception ex)
+            {
+                ex.printStackTrace();
+                DashboardPanel.this.errorReporter.reportError(ex);
+            }
+        };
 		Timer t = new Timer(1000, alDeamonStatus);
 		t.start();
 		this.timers.add(t);
 		
 		// Thread and timer to update the wallet balance
-		this.walletBalanceGatheringThread = new DataGatheringThread<WalletBalance>(
-			new DataGatheringThread.DataGatherer<WalletBalance>() 
-			{
-				public WalletBalance gatherData()
-					throws Exception
-				{
-					long start = System.currentTimeMillis();
-					WalletBalance balance = DashboardPanel.this.clientCaller.getWalletInfo();
-					long end = System.currentTimeMillis();
-					
-					// TODO: move this call to a dedicated one-off gathering thread - this is the wrong place
-					// it works but a better design is needed.
-					if (DashboardPanel.this.walletIsEncrypted == null)
-					{
-					    DashboardPanel.this.walletIsEncrypted = DashboardPanel.this.clientCaller.isWalletEncrypted();
-					}
-					
-					System.out.println("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
-					
-					return balance;
-				}
-			}, 
-			this.errorReporter, 8000, true);
+		this.walletBalanceGatheringThread = new DataGatheringThread<>(
+				() -> {
+                    long start = System.currentTimeMillis();
+                    WalletBalance balance = DashboardPanel.this.clientCaller.getWalletInfo();
+                    long end = System.currentTimeMillis();
+
+                    // TODO: move this call to a dedicated one-off gathering thread - this is the wrong place
+                    // it works but a better design is needed.
+                    if (DashboardPanel.this.walletIsEncrypted == null) {
+                        DashboardPanel.this.walletIsEncrypted = DashboardPanel.this.clientCaller.isWalletEncrypted();
+                    }
+
+                    System.out.println("Gathering of dashboard wallet balance data done in " + (end - start) + "ms.");
+
+                    return balance;
+                },
+				this.errorReporter, 8000, true
+		);
 		this.threads.add(this.walletBalanceGatheringThread);
 		
 		ActionListener alWalletBalance = new ActionListener() {
@@ -241,21 +221,17 @@ public class DashboardPanel
 		this.timers.add(walletBalanceTimer);
 
 		// Thread and timer to update the transactions table
-		this.transactionGatheringThread = new DataGatheringThread<String[][]>(
-			new DataGatheringThread.DataGatherer<String[][]>() 
-			{
-				public String[][] gatherData()
-					throws Exception
-				{
-					long start = System.currentTimeMillis();
-					String[][] data =  DashboardPanel.this.getTransactionsDataFromWallet();
-					long end = System.currentTimeMillis();
-					System.out.println("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
-					
-					return data;
-				}
-			}, 
-			this.errorReporter, 25000);
+		this.transactionGatheringThread = new DataGatheringThread<>(
+				() -> {
+                    long start = System.currentTimeMillis();
+                    String[][] data = DashboardPanel.this.getTransactionsDataFromWallet();
+                    long end = System.currentTimeMillis();
+                    System.out.println("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms.");
+
+                    return data;
+                },
+				this.errorReporter, 25000
+		);
 		this.threads.add(this.transactionGatheringThread);
 		
 		ActionListener alTransactions = new ActionListener() {
@@ -277,21 +253,17 @@ public class DashboardPanel
 		this.timers.add(t);
 
 		// Thread and timer to update the network and blockchain details
-		this.netInfoGatheringThread = new DataGatheringThread<NetworkAndBlockchainInfo>(
-			new DataGatheringThread.DataGatherer<NetworkAndBlockchainInfo>() 
-			{
-				public NetworkAndBlockchainInfo gatherData()
-					throws Exception
-				{
-					long start = System.currentTimeMillis();
-					NetworkAndBlockchainInfo data =  DashboardPanel.this.clientCaller.getNetworkAndBlockchainInfo();
-					long end = System.currentTimeMillis();
-					System.out.println("Gathering of network and blockchain info data done in " + (end - start) + "ms." );
-					
-					return data;
-				}
-			}, 
-			this.errorReporter, 10000, true);
+		this.netInfoGatheringThread = new DataGatheringThread<>(
+				() -> {
+                    long start = System.currentTimeMillis();
+                    NetworkAndBlockchainInfo data = DashboardPanel.this.clientCaller.getNetworkAndBlockchainInfo();
+                    long end = System.currentTimeMillis();
+                    System.out.println("Gathering of network and blockchain info data done in " + (end - start) + "ms.");
+
+                    return data;
+                },
+				this.errorReporter, 10000, true
+		);
 		this.threads.add(this.netInfoGatheringThread);
 		
 		ActionListener alNetAndBlockchain = new ActionListener() {
@@ -323,8 +295,7 @@ public class DashboardPanel
 	
 
 	private void updateDaemonStatusLabel()
-		throws IOException, InterruptedException, WalletCallException
-	{
+		throws IOException, InterruptedException {
 		DaemonInfo daemonInfo = this.daemonInfoGatheringThread.getLastData();
 		
 		// It is possible there has been no gathering initially
@@ -393,9 +364,7 @@ public class DashboardPanel
 	}
 
 	
-	private void updateNetworkAndBlockchainLabel()
-		throws IOException, InterruptedException
-	{
+	private void updateNetworkAndBlockchainLabel() {
 		NetworkAndBlockchainInfo info = this.netInfoGatheringThread.getLastData();
 			
 		// It is possible there has been no gathering initially
@@ -404,8 +373,7 @@ public class DashboardPanel
 			return;
 		}
 		
-		// TODO: Get the start date right after ZCash release - from first block!!!
-		final Date startDate = new Date("22 Nov 2016 02:00:00 GMT");
+		final Date startDate = new Date("18 Nov 2016 01:53:31 GMT");
 		final Date nowDate = new Date(System.currentTimeMillis());
 		
 		long fullTime = nowDate.getTime() - startDate.getTime();
@@ -427,7 +395,7 @@ public class DashboardPanel
 			percentage = df.format(dPercentage);
 			
 			// Also set a member that may be queried
-			this.blockchainPercentage = new Integer((int)dPercentage);
+			this.blockchainPercentage = (int) dPercentage;
 		} else
 		{
 			this.blockchainPercentage = 100;
@@ -486,9 +454,7 @@ public class DashboardPanel
 	}
 	
 
-	private void updateWalletStatusLabel()
-		throws WalletCallException, IOException, InterruptedException
-	{
+	private void updateWalletStatusLabel() {
 		WalletBalance balance = this.walletBalanceGatheringThread.getLastData();
 		
 		// It is possible there has been no gathering initially
@@ -553,14 +519,12 @@ public class DashboardPanel
 		{
 			return;
 		}
-			
+
 		if (Util.arraysAreDifferent(lastTransactionsData, newTransactionsData))
 		{
 			System.out.println("Updating table of transactions...");
 			this.remove(transactionsTablePane);
-			this.add(transactionsTablePane = new JScrollPane(
-			             transactionsTable = this.createTransactionsTable(newTransactionsData)),
-			         BorderLayout.CENTER);
+			this.add(transactionsTablePane = new JScrollPane(this.createTransactionsTable(newTransactionsData)), BorderLayout.CENTER);
 		}
 
 		lastTransactionsData = newTransactionsData;
@@ -570,9 +534,7 @@ public class DashboardPanel
 	}
 
 
-	private JTable createTransactionsTable(String rowData[][])
-		throws WalletCallException, IOException, InterruptedException
-	{
+	private JTable createTransactionsTable(String rowData[][]) {
 		String columnNames[] = { "Type", "Direction", "Confirmed?", "Amount", "Date", "Destination Address"};
         JTable table = new TransactionTable(
         	rowData, columnNames, this.parentFrame, this.clientCaller); 
@@ -616,13 +578,13 @@ public class DashboardPanel
 				Date d1 = new Date(0);
 				if (!o1[4].equals("N/A"))
 				{
-					d1 = new Date(Long.valueOf(o1[4]).longValue() * 1000L);
+					d1 = new Date(Long.valueOf(o1[4]) * 1000L);
 				}
 
 				Date d2 = new Date(0);
 				if (!o2[4].equals("N/A"))
 				{
-					d2 = new Date(Long.valueOf(o2[4]).longValue() * 1000L);
+					d2 = new Date(Long.valueOf(o2[4]) * 1000L);
 				}
 
 				if (d1.equals(d2))
@@ -655,56 +617,51 @@ public class DashboardPanel
 		for (String[] trans : allTransactions)
 		{
 			// Direction
-			if (trans[1].equals("receive"))
-			{
-				trans[1] = "\u21E8 IN";
-			} else if (trans[1].equals("send"))
-			{
-				trans[1] = "\u21E6 OUT";
-			} else if (trans[1].equals("generate"))
-			{
-				trans[1] = "\u2692\u2699 MINED";
-			} else if (trans[1].equals("immature"))
-			{
-				trans[1] = "\u2696 Immature";
-			};
+			switch (trans[1]) {
+				case "receive":
+					trans[1] = "\u21E8 IN";
+					break;
+				case "send":
+					trans[1] = "\u21E6 OUT";
+					break;
+				case "generate":
+					trans[1] = "\u2692\u2699 MINED";
+					break;
+				case "immature":
+					trans[1] = "\u2696 Immature";
+					break;
+			}
 
 			// Date
-			if (!trans[4].equals("N/A"))
-			{
-				trans[4] = new Date(Long.valueOf(trans[4]).longValue() * 1000L).toLocaleString();
+			if (!trans[4].equals("N/A")) {
+				trans[4] = new Date(Long.valueOf(trans[4]) * 1000L).toLocaleString();
 			}
 			
 			// Amount
-			try
-			{
+			try {
 				double amount = Double.valueOf(trans[3]);
 				if (amount < 0d)
 				{
 					amount = -amount;
 				}
 				trans[3] = df.format(amount);
-			} catch (NumberFormatException nfe)
-			{
+			} catch (final NumberFormatException e) {
 				System.out.println("Error occurred while formatting amount: " + trans[3] + 
-						           " - " + nfe.getMessage() + "!");
+						           " - " + e.getMessage() + "!");
 			}
 			
 			// Confirmed?
-			try
-			{
+			try {
 				boolean isConfirmed = !trans[2].trim().equals("0"); 
 				
 				trans[2] = isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed);
-			} catch (NumberFormatException nfe)
-			{
+			} catch (final NumberFormatException e) {
 				System.out.println("Error occurred while formatting confirmations: " + trans[2] + 
-						           " - " + nfe.getMessage() + "!");
+						           " - " + e.getMessage() + "!");
 			}
 		}
-
 
 		return allTransactions;
 	}
 	
-} // End class
+}

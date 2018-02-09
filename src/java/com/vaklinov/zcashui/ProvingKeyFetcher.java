@@ -14,7 +14,6 @@ import java.net.URL;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitorInputStream;
@@ -25,7 +24,7 @@ import javax.xml.bind.DatatypeConverter;
  * Fetches the proving key.  Deliberately hardcoded.
  * @author zab
  */
-public class ProvingKeyFetcher {
+class ProvingKeyFetcher {
     
     private static final int PROVING_KEY_SIZE = 910173851;
     private static final String SHA256 = "8bc20a7f013b2b58970cddd2e7ea028975c88ae7ceb9259a5344a16bc2c0eef7";
