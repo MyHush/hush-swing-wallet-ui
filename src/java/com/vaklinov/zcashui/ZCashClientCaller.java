@@ -6,7 +6,8 @@
  * /____\____\__,_|___/_| |_|____/ \_/\_/ |_|_| |_|\__, | \_/\_/ \__,_|_|_|\___|\__|\___/|___|
  *                                                 |___/
  *
- * Copyright (c) 2016 Ivan Vaklinov <ivan@vaklinov.com>
+ * Copyright (c) 2016-2017 Ivan Vaklinov <ivan@vaklinov.com>
+ * Copyright (c) 2018 The Hush Developers <contact@myhush.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -423,6 +424,21 @@ public class ZCashClientCaller
 			"gettransaction", wrapStringParameter(txID));
 
 		return jsonTransaction.get("confirmations").toString();
+	}
+
+
+		// Checks if a certain T address is a watch-only address or is otherwise invalid.
+	public synchronized boolean isWatchOnlyOrInvalidAddress(String address)
+		throws WalletCallException, IOException, InterruptedException
+	{
+		JsonObject response = this.executeCommandAndGetJsonValue("validateaddress", wrapStringParameter(address)).asObject();
+
+		if (response.getBoolean("isvalid", false))
+		{
+			return response.getBoolean("iswatchonly", true);
+		}
+		
+		return true;
 	}
 	
 

@@ -62,7 +62,7 @@ public class StartupProgressDialog extends JFrame {
         contentPane.add(imageLabel, BorderLayout.NORTH);
 		JLabel zcashWalletLabel = new JLabel(
 			"<html><span style=\"font-style:italic;font-weight:bold;font-size:24px\">" + 
-		    "HUSH Wallet UI</span></html>");
+		    "HUSH Wallet</span></html>");
 		zcashWalletLabel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 		contentPane.add(zcashWalletLabel, BorderLayout.CENTER);
         contentPane.add(southPanel, BorderLayout.SOUTH);
@@ -216,15 +216,15 @@ public class StartupProgressDialog extends JFrame {
         System.out.println("performing Win Bundle-specific launch");
         String programFiles = System.getenv("PROGRAMFILES");
         File pf = new File(programFiles);
-        File bundlePath = new File(pf, "hush4win/app");
+        File bundlePath = new File(pf, "hush/app");
         bundlePath = bundlePath.getCanonicalFile();
         
         // run "first-run.bat"
         File firstRun = new File(bundlePath,"first-run.bat");
-        if (firstRun.exists())
-        {
-        	Process firstRunProcess = Runtime.getRuntime().exec(firstRun.getCanonicalPath());
-        	firstRunProcess.waitFor();
+        if (firstRun.exists()) {
+            System.out.println("running script " + firstRun.getCanonicalPath());
+            Process firstRunProcess = Runtime.getRuntime().exec(firstRun.getCanonicalPath());
+            firstRunProcess.waitFor();
         }
     }
     
