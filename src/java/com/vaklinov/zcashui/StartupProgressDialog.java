@@ -8,6 +8,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
+import java.lang.Exception;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Locale;
@@ -22,6 +23,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JOptionPane;
 import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 
@@ -76,7 +78,7 @@ public class StartupProgressDialog extends JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
     
-    public void waitForStartup() throws IOException,
+    public void waitForStartup() throws Exception, IOException,
         InterruptedException,WalletCallException,InvocationTargetException {
         
         // special handling of Windows app launch
@@ -114,6 +116,8 @@ public class StartupProgressDialog extends JFrame {
         
         final Process daemonProcess = 
         	shouldStartZCashd ? clientCaller.startDaemon() : null;
+
+        setProgressText("Waiting for daemon to start...");
         
         Thread.sleep(POLL_PERIOD); // just a little extra
         
@@ -122,25 +126,33 @@ public class StartupProgressDialog extends JFrame {
         	iteration++;
             Thread.sleep(POLL_PERIOD);
             
-            JsonObject info = null;
-            
+            JsonObject info = null;            
             try
             {
             	info = clientCaller.getDaemonRawRuntimeInfo();
-            } catch (IOException e)
+            }
+            catch (IOException e)
             {
-            	if (iteration > 4)
-            	{
-            		throw e;
-            	} else
-            	{
-            		continue;
-            	}
+                setProgressText("Waiting for daemon to start..." + Integer.toString(15 - iteration));
+                
+                // wait 15 - POLL_PERIOD (1.5sec) intervals before asking user to continue waiting...
+            	if (iteration > 15)
+                {
+                    int dialogButton = JOptionPane.YES_NO_OPTION;
+                    int dialogResult = JOptionPane.showConfirmDialog (null, "Daemon taking too long to start, continue waiting?","Warning",dialogButton);
+                    if(dialogResult != JOptionPane.YES_OPTION){
+                        break;
+                    } else {
+                        iteration = 0;
+                    }
+                }
+                continue;
             }
             
             JsonValue code = info.get("code");
             if (code == null || (code.asInt() != STARTUP_ERROR_CODE))
                 break;
+            
             final String message = info.getString("message", "???");
             setProgressText(message);
             
