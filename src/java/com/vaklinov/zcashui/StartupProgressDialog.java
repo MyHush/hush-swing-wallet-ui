@@ -2,28 +2,18 @@
 // Taken from repository https://github.com/zlatinb/zcash-swing-wallet-ui under an MIT license
 package com.vaklinov.zcashui;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.io.File;
-import java.io.IOException;
-import java.lang.Exception;
-import java.net.URL;
-import java.util.concurrent.TimeUnit;
-
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 
-public class StartupProgressDialog extends JFrame {
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
+
+class StartupProgressDialog extends JFrame {
     private static final int POLL_PERIOD_MS = 500;
     private static final int STARTUP_ERROR_CODE = -28;
 
@@ -44,7 +34,7 @@ public class StartupProgressDialog extends JFrame {
         southPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 16, 16));
         contentPane.add(imageLabel, BorderLayout.NORTH);
         final JLabel hushWalletLabel = new JLabel(
-            "<html><span style=\"font-style:italic;font-weight:bold;font-size:24px\">HUSH Wallet UI</span></html>"
+                "<html><span style=\"font-style:italic;font-weight:bold;font-size:24px\">HUSH Wallet UI</span></html>"
         );
         hushWalletLabel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         contentPane.add(hushWalletLabel, BorderLayout.CENTER);
@@ -58,12 +48,6 @@ public class StartupProgressDialog extends JFrame {
         setLocationRelativeTo(null);
 
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-    }
-
-    private class DaemonStartupFailureException extends Exception {
-        DaemonStartupFailureException(final String message) {
-            super(message);
-        }
     }
 
     public void waitForStartup() throws Exception {
@@ -91,7 +75,6 @@ public class StartupProgressDialog extends JFrame {
      * This is a _blocking_ call to start the daemon and display the progress via the splash screen
      *
      * @return The daemon's newly created Process
-     *
      * @throws IOException
      * @throws InterruptedException
      * @throws DaemonStartupFailureException Upon failing to start the daemon in a timely manner
@@ -167,7 +150,7 @@ public class StartupProgressDialog extends JFrame {
                         clientCaller.stopDaemon();
                         daemonProcess.destroy();
                     }
-                    if (end - start > 1 * 60 * 1000) {
+                    if (end - start > 60 * 1000) {
                         break;
                     }
                 }
@@ -210,6 +193,12 @@ public class StartupProgressDialog extends JFrame {
             System.out.println("running script " + firstRun.getCanonicalPath());
             Process firstRunProcess = Runtime.getRuntime().exec(firstRun.getCanonicalPath());
             firstRunProcess.waitFor();
+        }
+    }
+
+    private class DaemonStartupFailureException extends Exception {
+        DaemonStartupFailureException(final String message) {
+            super(message);
         }
     }
 }

@@ -29,13 +29,13 @@
 package com.vaklinov.zcashui;
 
 
+import com.vaklinov.zcashui.OSUtil.OS_TYPE;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.util.StringTokenizer;
-
-import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 
 
 /**
@@ -43,240 +43,187 @@ import com.vaklinov.zcashui.OSUtil.OS_TYPE;
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class ZCashInstallationObserver
-{
-	public static class DaemonInfo
-	{
-		public DAEMON_STATUS status;
-		public double residentSizeMB;
-		public double virtualSizeMB;
-		public double cpuPercentage;
-	}
+public class ZCashInstallationObserver {
+    public ZCashInstallationObserver(String installDir)
+            throws IOException {
+        // Detect daemon and client tools installation
+        File dir = new File(installDir);
 
-	public static enum DAEMON_STATUS
-	{
-		RUNNING,
-		NOT_RUNNING,
-		UNABLE_TO_ASCERTAIN;
-	}
+        if (!dir.exists() || dir.isFile()) {
+            throw new InstallationDetectionException(
+                    "The HUSH installation directory " + installDir + " does not exist or is not " +
+                            "a directory or is otherwise inaccessible to the wallet!");
+        }
 
-	private String args[];
+        File zcashd = new File(dir, OSUtil.getZCashd());
+        File zcashcli = new File(dir, OSUtil.getZCashCli());
 
-	public ZCashInstallationObserver(String installDir)
-		throws IOException
-	{
-		// Detect daemon and client tools installation
-		File dir = new File(installDir);
+        if ((!zcashd.exists()) || (!zcashcli.exists())) {
+            zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());
+            zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
+        }
 
-		if (!dir.exists() || dir.isFile())
-		{
-			throw new InstallationDetectionException(
-				"The HUSH installation directory " + installDir + " does not exist or is not " +
-			    "a directory or is otherwise inaccessible to the wallet!");
-		}
+        System.out.println("Using HUSH utilities: " +
+                                   "hushd: " + ((zcashd != null) ? zcashd.getCanonicalPath() : "<MISSING>") + ", " +
+                                   "hush-cli: " + ((zcashcli != null) ? zcashcli.getCanonicalPath() : "<MISSING>"));
 
-		File zcashd = new File(dir, OSUtil.getZCashd());
-		File zcashcli = new File(dir, OSUtil.getZCashCli());
+        if ((zcashd == null) || (zcashcli == null) || (!zcashd.exists()) || (!zcashcli.exists())) {
+            throw new InstallationDetectionException(
+                    "The HUSH GUI Wallet installation directory " + installDir + " needs\nto contain " +
+                            "the command line utilities hushd and hush-cli. At least one of them is missing! \n" +
+                            "Please place files HUSHSwingWalletUI.jar, " + OSUtil.getZCashCli() + ", " +
+                            OSUtil.getZCashd() + " in the same directory.");
+        }
+    }
 
-		if ((!zcashd.exists()) || (!zcashcli.exists()))
-		{
-			zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());
-			zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
-		}
+    public synchronized DaemonInfo getDaemonInfo()
+            throws IOException, InterruptedException {
+        OS_TYPE os = OSUtil.getOSType();
 
-		System.out.println("Using HUSH utilities: " +
-		                   "hushd: "    + ((zcashd != null) ? zcashd.getCanonicalPath() : "<MISSING>") + ", " +
-		                   "hush-cli: " + ((zcashcli != null) ? zcashcli.getCanonicalPath() : "<MISSING>"));
+        if (os == OS_TYPE.WINDOWS) {
+            return getDaemonInfoForWindowsOS();
+        } else {
+            return getDaemonInfoForUNIXLikeOS();
+        }
+    }
 
-		if ((zcashd == null) || (zcashcli == null) || (!zcashd.exists()) || (!zcashcli.exists()))
-		{
-			throw new InstallationDetectionException(
-				"The HUSH GUI Wallet installation directory " + installDir + " needs\nto contain " +
-				"the command line utilities hushd and hush-cli. At least one of them is missing! \n" +
-				"Please place files HUSHSwingWalletUI.jar, " + OSUtil.getZCashCli() + ", " + 
-				OSUtil.getZCashd() + " in the same directory.");
-		}
-	}
+    // So far tested on Mac OS X and Linux - expected to work on other UNIXes as well
+    private synchronized DaemonInfo getDaemonInfoForUNIXLikeOS()
+            throws IOException, InterruptedException {
+        DaemonInfo info = new DaemonInfo();
+        info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
 
-	
-	public synchronized DaemonInfo getDaemonInfo()
-			throws IOException, InterruptedException
-	{
-		OS_TYPE os = OSUtil.getOSType();
-		
-		if (os == OS_TYPE.WINDOWS)
-		{
-			return getDaemonInfoForWindowsOS();
-		} else
-		{
-			return getDaemonInfoForUNIXLikeOS();
-		}
-	}
-	
+        CommandExecutor exec = new CommandExecutor(new String[]{ "ps", "auxwww" });
+        LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
 
-	// So far tested on Mac OS X and Linux - expected to work on other UNIXes as well
-	private synchronized DaemonInfo getDaemonInfoForUNIXLikeOS()
-		throws IOException, InterruptedException
-	{
-		DaemonInfo info = new DaemonInfo();
-		info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
+        String line;
+        while ((line = lnr.readLine()) != null) {
+            StringTokenizer st = new StringTokenizer(line, " \t", false);
+            boolean foundZCash = false;
+            label:
+            for (int i = 0; i < 11; i++) {
+                final String token;
+                if (st.hasMoreTokens()) {
+                    token = st.nextToken();
+                } else {
+                    break;
+                }
 
-		CommandExecutor exec = new CommandExecutor(new String[] { "ps", "auxwww"});
-		LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
+                switch (i) {
+                    case 2:
+                        try {
+                            info.cpuPercentage = Double.valueOf(token);
+                        } catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
+                        break;
+                    case 4:
+                        try {
+                            info.virtualSizeMB = Double.valueOf(token) / 1000;
+                        } catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
+                        break;
+                    case 5:
+                        try {
+                            info.residentSizeMB = Double.valueOf(token) / 1000;
+                        } catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
+                        break;
+                    case 10:
+                        if ((token.equals("hushd")) || (token.endsWith("/hushd"))) {
+                            info.status = DAEMON_STATUS.RUNNING;
+                            foundZCash = true;
+                            break label;
+                        }
+                        break;
+                }
+            }
 
-		String line;
-		while ((line = lnr.readLine()) != null)
-		{
-			StringTokenizer st = new StringTokenizer(line, " \t", false);
-			boolean foundZCash = false;
-			for (int i = 0; i < 11; i++)
-			{
-				String token = null;
-				if (st.hasMoreTokens())
-				{
-					token = st.nextToken();
-				} else
-				{
-					break;
-				}
+            if (foundZCash) {
+                break;
+            }
+        }
 
-				if (i == 2)
-				{
-					try
-					{
-						info.cpuPercentage = Double.valueOf(token);
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
-				} else if (i == 4)
-				{
-					try
-					{
-						info.virtualSizeMB = Double.valueOf(token) / 1000;
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
-				} else if (i == 5)
-				{
-					try
-					{
-					    info.residentSizeMB = Double.valueOf(token) / 1000;
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
-				} else if (i == 10)
-				{
-					if ((token.equals("hushd")) || (token.endsWith("/hushd")))
-					{
-						info.status = DAEMON_STATUS.RUNNING;
-						foundZCash = true;
-						break;
-					}
-				}
-			}
+        if (info.status != DAEMON_STATUS.RUNNING) {
+            info.cpuPercentage = 0;
+            info.residentSizeMB = 0;
+            info.virtualSizeMB = 0;
+        }
 
-			if (foundZCash)
-			{
-				break;
-			}
-		}
+        return info;
+    }
 
-		if (info.status != DAEMON_STATUS.RUNNING)
-		{
-			info.cpuPercentage  = 0;
-			info.residentSizeMB = 0;
-			info.virtualSizeMB  = 0;
-		}
+    private synchronized DaemonInfo getDaemonInfoForWindowsOS()
+            throws IOException, InterruptedException {
+        DaemonInfo info = new DaemonInfo();
+        info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
+        info.cpuPercentage = 0;
+        info.virtualSizeMB = 0;
 
-		return info;
-	}
-	
-	
-	private synchronized DaemonInfo getDaemonInfoForWindowsOS()
-		throws IOException, InterruptedException
-	{
-		DaemonInfo info = new DaemonInfo();
-		info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
-		info.cpuPercentage = 0;
-		info.virtualSizeMB = 0;
+        CommandExecutor exec = new CommandExecutor(new String[]{ "tasklist" });
+        LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
 
-		CommandExecutor exec = new CommandExecutor(new String[] { "tasklist" });
-		LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
+        String line;
+        while ((line = lnr.readLine()) != null) {
+            final StringTokenizer stringTokenizer = new StringTokenizer(line, " \t", false);
+            boolean foundZCash = false;
+            final StringBuilder size = new StringBuilder();
+            for (int i = 0; i < 8; i++) {
+                if (!stringTokenizer.hasMoreTokens()) {
+                    break;
+                }
+                final String token = stringTokenizer.nextToken().replaceAll("^\"|\"$", "");
 
-		String line;
-		while ((line = lnr.readLine()) != null)
-		{
-			StringTokenizer st = new StringTokenizer(line, " \t", false);
-			boolean foundZCash = false;
-			String size = "";
-			for (int i = 0; i < 8; i++)
-			{
-				String token = null;
-				if (st.hasMoreTokens())
-				{
-					token = st.nextToken();
-				} else
-				{
-					break;
-				}
-				
-				if (token.startsWith("\""))
-				{
-					token = token.substring(1);
-				}
-				
-				if (token.endsWith("\""))
-				{
-					token = token.substring(0, token.length() - 1);
-				}
+                if (i == 0) {
+                    if (token.equals("hushd.exe") || token.equals("hushd")) {
+                        info.status = DAEMON_STATUS.RUNNING;
+                        foundZCash = true;
+                        //System.out.println("ZCashd process data is: " + line);
+                    }
+                } else if ((i >= 4) && foundZCash) {
+                    try {
+                        size.append(token.replaceAll("[^0-9]", ""));
+                        if (size.toString().endsWith("K")) {
+                            size.setLength(size.length() - 1);
+                        }
+                    } catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
+                }
+            } // End parsing row
 
-				if (i == 0)
-				{
-					if (token.equals("hushd.exe") || token.equals("hushd"))
-					{
-						info.status = DAEMON_STATUS.RUNNING;
-						foundZCash = true;
-						//System.out.println("ZCashd process data is: " + line);
-					}
-				} else if ((i >= 4) && foundZCash)
-				{
-					try
-					{
-						size += token.replaceAll("[^0-9]", "");
-						if (size.endsWith("K"))
-						{
-							size = size.substring(0, size.length() - 1);
-						}
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
-				} 
-			} // End parsing row
+            if (foundZCash) {
+                try {
+                    info.residentSizeMB = Double.valueOf(size.toString()) / 1000;
+                } catch (NumberFormatException nfe) {
+                    info.residentSizeMB = 0;
+                    System.out.println("Error: could not find the numeric memory size of hushd: " + size);
+                }
+                break;
+            }
+        }
 
-			if (foundZCash)
-			{
-				try
-				{
-					info.residentSizeMB = Double.valueOf(size) / 1000;
-				} catch (NumberFormatException nfe)
-				{
-					info.residentSizeMB = 0;
-					System.out.println("Error: could not find the numeric memory size of hushd: " + size);
-				};
-				
-				break;
-			}
-		}
+        if (info.status != DAEMON_STATUS.RUNNING) {
+            info.cpuPercentage = 0;
+            info.residentSizeMB = 0;
+            info.virtualSizeMB = 0;
+        }
 
-		if (info.status != DAEMON_STATUS.RUNNING)
-		{
-			info.cpuPercentage  = 0;
-			info.residentSizeMB = 0;
-			info.virtualSizeMB  = 0;
-		}
+        return info;
+    }
 
-		return info;
-	}
-	
 
-	public static class InstallationDetectionException
-		extends IOException
-	{
-		public InstallationDetectionException(String message)
-		{
-			super(message);
-		}
-	}
+    public enum DAEMON_STATUS {
+        RUNNING,
+        NOT_RUNNING,
+        UNABLE_TO_ASCERTAIN
+    }
+
+    public static class DaemonInfo {
+        public DAEMON_STATUS status;
+        public double residentSizeMB;
+        public double virtualSizeMB;
+        public double cpuPercentage;
+    }
+
+    public static class InstallationDetectionException
+            extends IOException {
+        InstallationDetectionException(String message) {
+            super(message);
+        }
+    }
 }

@@ -28,17 +28,13 @@
  **********************************************************************************/
 package com.vaklinov.zcashui;
 
-import java.awt.Toolkit;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-
-import javax.swing.JFrame;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.KeyStroke;
 
 
 /**
@@ -46,81 +42,68 @@ import javax.swing.KeyStroke;
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class AddressTable 
-	extends DataTable 
-{	
-	public AddressTable(final Object[][] rowData, final Object[] columnNames, 
-			            final ZCashClientCaller caller)
-	{
-		super(rowData, columnNames);
-		int accelaratorKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-        
-		JMenuItem obtainPrivateKey = new JMenuItem("Obtain private key...");
-		obtainPrivateKey.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, accelaratorKeyMask));
+class AddressTable
+        extends DataTable {
+    public AddressTable(final Object[][] rowData, final Object[] columnNames,
+                        final ZCashClientCaller caller
+                       ) {
+        super(rowData, columnNames);
+        int accelaratorKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+
+        JMenuItem obtainPrivateKey = new JMenuItem("Obtain private key...");
+        obtainPrivateKey.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, accelaratorKeyMask));
         popupMenu.add(obtainPrivateKey);
-        
-        obtainPrivateKey.addActionListener(new ActionListener() 
-        {	
-			@Override
-			public void actionPerformed(ActionEvent e) 
-			{
-				if ((lastRow >= 0) && (lastColumn >= 0))
-				{
-					try
-					{
-						String address = AddressTable.this.getModel().getValueAt(lastRow, 2).toString();
 
-						// TODO: We need a much more precise criterion to distinguish T/Z adresses;
-						boolean isZAddress = address.startsWith("z") && address.length() > 40;
-						
-						// Check for encrypted wallet
-						final boolean bEncryptedWallet = caller.isWalletEncrypted();
-						if (bEncryptedWallet)
-						{
-							PasswordDialog pd = new PasswordDialog((JFrame)(AddressTable.this.getRootPane().getParent()));
-							pd.setVisible(true);
-							
-							if (!pd.isOKPressed())
-							{
-								return;
-							}
-							
-							caller.unlockWallet(pd.getPassword());
-						}
-						
-						String privateKey = isZAddress ?
-							caller.getZPrivateKey(address) : caller.getTPrivateKey(address);
-							
-						// Lock the wallet again 
-						if (bEncryptedWallet)
-						{
-							caller.lockWallet();
-						}
-							
-						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-						clipboard.setContents(new StringSelection(privateKey), null);
-						
-						JOptionPane.showMessageDialog(
-							AddressTable.this.getRootPane().getParent(), 
-							(isZAddress ? "Z (Private)" : "T (Transparent)") +  " address:\n" +
-							address + "\n" + 
-							"has private key:\n" +
-							privateKey + "\n\n" +
-							"The private key has also been copied to the clipboard.", 
-							"Private key information", JOptionPane.INFORMATION_MESSAGE);
+        obtainPrivateKey.addActionListener(e -> {
+            if ((lastRow >= 0) && (lastColumn >= 0)) {
+                try {
+                    String address = AddressTable.this.getModel().getValueAt(lastRow, 2).toString();
 
-						
-					} catch (Exception ex)
-					{
-						ex.printStackTrace();
-						// TODO: report exception to user
-					}
-				} else
-				{
-					// Log perhaps
-				}
-			}
-		});
-	} // End constructor
+                    // TODO: We need a much more precise criterion to distinguish T/Z adresses;
+                    boolean isZAddress = address.startsWith("z") && address.length() > 40;
+
+                    // Check for encrypted wallet
+                    final boolean bEncryptedWallet = caller.isWalletEncrypted();
+                    if (bEncryptedWallet) {
+                        PasswordDialog pd = new PasswordDialog((JFrame) (AddressTable.this.getRootPane().getParent()));
+                        pd.setVisible(true);
+
+                        if (!pd.isOKPressed()) {
+                            return;
+                        }
+
+                        caller.unlockWallet(pd.getPassword());
+                    }
+
+                    String privateKey = isZAddress ?
+                                                caller.getZPrivateKey(address) : caller.getTPrivateKey(address);
+
+                    // Lock the wallet again
+                    if (bEncryptedWallet) {
+                        caller.lockWallet();
+                    }
+
+                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    clipboard.setContents(new StringSelection(privateKey), null);
+
+                    JOptionPane.showMessageDialog(
+                            AddressTable.this.getRootPane().getParent(),
+                            (isZAddress ? "Z (Private)" : "T (Transparent)") + " address:\n" +
+                                    address + "\n" +
+                                    "has private key:\n" +
+                                    privateKey + "\n\n" +
+                                    "The private key has also been copied to the clipboard.",
+                            "Private key information", JOptionPane.INFORMATION_MESSAGE);
+
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    // TODO: report exception to user
+                }
+            } else {
+                // Log perhaps
+            }
+        });
+    } // End constructor
 
 }
