@@ -1,35 +1,13 @@
 <!--
- *  _________          _     ____          _           __        __    _ _      _   _   _ ___ 
- * |__  / ___|__ _ ___| |__ / ___|_      _(_)_ __   __ \ \      / /_ _| | | ___| |_| | | |_ _|
- *   / / |   / _` / __| '_ \\___ \ \ /\ / / | '_ \ / _` \ \ /\ / / _` | | |/ _ \ __| | | || | 
- *  / /| |__| (_| \__ \ | | |___) \ V  V /| | | | | (_| |\ V  V / (_| | | |  __/ |_| |_| || | 
- * /____\____\__,_|___/_| |_|____/ \_/\_/ |_|_| |_|\__, | \_/\_/ \__,_|_|_|\___|\__|\___/|___|
- *                                                 |___/                                      
- *                                       
- * Copyright (c) 2016-2017 Ivan Vaklinov <ivan@vaklinov.com>
- * Copyright (c) 2018 The Hush Developers
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.                                    
- *
+// Copyright (c) 2016-2017 Ivan Vaklinov <ivan@vaklinov.com>
+// Copyright (c) 2018 The Hush Developers <contact@myhush.org>
+//
+// Distributed under the MIT software license, see the accompanying
+// file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 -->
 <project name="HUSHSwingWalletUI" basedir="../.." default="buildit" xmlns:fx="javafx:com.sun.javafx.tools.ant">
-	
+
+	<property name="ext.dir"     value="ext"/>
     <property name="src.dir"     value="src"/>
     <property name="build.dir"   value="build"/>
     <property name="classes.dir" value="${build.dir}/classes"/>
@@ -39,10 +17,10 @@
 	<property name="appbundler.jar" value="antlib/appbundler-1.0.jar" />
 	<property name="win.app.dir" value="${build.dir}/winapp" />
     
-    <property name="main-class"  value="com.vaklinov.zcashui.ZCashUI"/>
+    <property name="main-class"  value="org.myhush.gui.HushWalletFrame"/>
 
 	<path id="main-classpath">
-		<fileset dir="lib">
+		<fileset dir="${build.dir}">
 			<include name="**/*.jar" />
 		</fileset>
 	</path>
@@ -62,6 +40,9 @@
 
     <target name="compile">
         <mkdir dir="${classes.dir}"/>
+		<javac srcdir="${ext.dir}" destdir="${classes.dir}" debug="on">
+			<classpath refid="main-classpath"/>
+		</javac>
         <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="on">
         	<classpath refid="main-classpath"/>
         </javac>
@@ -76,6 +57,9 @@
                 <attribute name="Main-Class" value="${main-class}"/>
             </manifest>
         </jar>
+		<jar destfile="${jar.dir}/${ant.project.name}-ext-src.jar"
+			 basedir="${ext.dir}">
+		</jar>
         <jar destfile="${jar.dir}/${ant.project.name}-src.jar" 
         	 basedir="${src.dir}">
         </jar>
@@ -160,7 +144,7 @@
 			</fx:resources>
 			
 			<fx:platform>
-				<fx:jvmarg value="-Dzcash.location.dir=$APPDIR/Java" />
+				<fx:jvmarg value="-Dhush.location.dir=$APPDIR/Java" />
 				<fx:jvmarg value="-Dlaunching.from.appbundle=true" />
 				<fx:jvmarg value="-Dwallet.name=hush" />
 				<fx:jvmarg value="-Dwallet.version=1.0.12"/>
