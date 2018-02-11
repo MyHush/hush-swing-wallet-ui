@@ -20,6 +20,6 @@ IF NOT EXIST %AppData%\Hush\hush.conf (
 
 IF NOT EXIST %LocalAppData%\HushSwingWalletUI\addressBook.csv (
   (
-    echo t1h6kmaQwcuyejDLazT3TNZfV8EEtCzHRhc,HUSH Team Donation address
+    echo t1Npak5Tdb7CZpWS6dzokCPv8ugy7LanJ9g,HUSH Team Donation address
   ) > %LocalAppData%\HushSwingWalletUI\addressBook.csv
 )

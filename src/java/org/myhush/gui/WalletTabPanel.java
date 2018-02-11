@@ -14,24 +14,19 @@ import java.util.List;
  */
 class WalletTabPanel extends JPanel {
     // Lists of threads and timers that may be stopped if necessary
-    List<Timer> timers;
-    List<DataGatheringThread<?>> threads;
-
+    final List<Timer> timers = new ArrayList<>();
+    final List<DataGatheringThread<?>> threads = new ArrayList<>();
 
     WalletTabPanel() {
         super();
-
-        this.timers = new ArrayList<>();
-        this.threads = new ArrayList<>();
     }
 
     public void stopThreadsAndTimers() {
-        for (Timer timer : timers) {
+        for (final Timer timer : timers) {
             timer.stop();
         }
-        for (DataGatheringThread<?> thread : threads) {
+        for (final DataGatheringThread<?> thread : threads) {
             thread.setSuspended(true);
         }
     }
-
 }

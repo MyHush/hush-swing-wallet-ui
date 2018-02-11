@@ -5,6 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 package org.myhush.gui;
 
+// BRX-TODO: This should be reworked a bit
 /**
  * This thread may be used to periodically and asynchronously load data if the load operation
  * takes considerable time. The creator of the thread may obtain the latest gathered data
@@ -32,7 +33,7 @@ class DataGatheringThread<T> extends Thread {
      * @param errorReporter Error reporter - may be null
      * @param interval      Interval in ms for gathering
      */
-    public DataGatheringThread(DataGatherer<T> gatherer, StatusUpdateErrorReporter errorReporter, int interval) {
+    DataGatheringThread(final DataGatherer<T> gatherer, final StatusUpdateErrorReporter errorReporter, final int interval) {
         this(gatherer, errorReporter, interval, false);
     }
 
@@ -43,9 +44,12 @@ class DataGatheringThread<T> extends Thread {
      * @param errorReporter Error reporter - may be null
      * @param interval      Interval in ms for gathering
      */
-    DataGatheringThread(DataGatherer<T> gatherer, StatusUpdateErrorReporter errorReporter,
-                        int interval, boolean doAFirstGathering
-                       ) {
+    DataGatheringThread(
+        final DataGatherer<T> gatherer,
+        final StatusUpdateErrorReporter errorReporter,
+        final int interval,
+        final boolean doAFirstGathering
+    ) {
         this.suspended = false;
         this.gatherer = gatherer;
         this.errorReporter = errorReporter;
@@ -63,7 +67,7 @@ class DataGatheringThread<T> extends Thread {
      *
      * @param suspended suspension flag.
      */
-    public synchronized void setSuspended(boolean suspended) {
+    public synchronized void setSuspended(final boolean suspended) {
         this.suspended = suspended;
     }
 
@@ -87,20 +91,18 @@ class DataGatheringThread<T> extends Thread {
 
         while (true) {
             synchronized (this) {
-                long startWait = System.currentTimeMillis();
+                final long startWait = System.currentTimeMillis();
                 long endWait;
                 do {
                     try {
                         this.wait(300);
-                    } catch (InterruptedException ie) {
+                    } catch (final InterruptedException e) {
                         // One of the rare cases where we do nothing
-                        ie.printStackTrace();
+                        e.printStackTrace();
                     }
-
                     endWait = System.currentTimeMillis();
                 } while ((endWait - startWait) <= this.interval);
             }
-
             if (this.suspended) {
                 break;
             }
@@ -115,7 +117,7 @@ class DataGatheringThread<T> extends Thread {
 
         try {
             localData = this.gatherer.gatherData();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (!this.suspended) {
                 e.printStackTrace();
                 if (this.errorReporter != null) {
@@ -125,12 +127,10 @@ class DataGatheringThread<T> extends Thread {
                 System.out.println("DataGatheringThread: ignoring " + e.getClass().getName() + " due to suspension!");
             }
         }
-
         synchronized (this) {
             this.lastGatheredData = localData;
         }
     }
-
 
     /**
      * All implementations must provide an impl. of this interface to
@@ -139,7 +139,6 @@ class DataGatheringThread<T> extends Thread {
      * @param <T> the type of data that is gathered.
      */
     public interface DataGatherer<T> {
-        T gatherData()
-                throws Exception;
+        T gatherData() throws Exception;
     }
 }

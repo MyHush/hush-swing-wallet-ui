@@ -24,85 +24,81 @@ class WalletOperations {
     private final SendCashPanel sendCash;
     private final AddressesPanel addresses;
 
-    private final HushCommandLineBridge clientCaller;
+    private final HushCommandLineBridge cliBridge;
     private final StatusUpdateErrorReporter errorReporter;
 
 
-    WalletOperations(HushWalletFrame parent,
-                     JTabbedPane tabs,
-                     DashboardPanel dashboard,
-                     AddressesPanel addresses,
-                     SendCashPanel sendCash,
-                     HushCommandLineBridge clientCaller,
-                     StatusUpdateErrorReporter errorReporter
-                    ) {
+    WalletOperations(
+            final HushWalletFrame parent,
+            final JTabbedPane tabs,
+            final DashboardPanel dashboard,
+            final AddressesPanel addresses,
+            final SendCashPanel sendCash,
+            final HushCommandLineBridge cliBridge,
+            final StatusUpdateErrorReporter errorReporter
+    ) {
         this.parent = parent;
         this.tabs = tabs;
         this.dashboard = dashboard;
         this.addresses = addresses;
         this.sendCash = sendCash;
-
-        this.clientCaller = clientCaller;
+        this.cliBridge = cliBridge;
         this.errorReporter = errorReporter;
     }
 
-
     public void encryptWallet() {
         try {
-            if (this.clientCaller.isWalletEncrypted()) {
+            if (this.cliBridge.isWalletEncrypted()) {
                 JOptionPane.showMessageDialog(
                         this.parent,
-                        "The wallet.dat file being used is already encrypted. " +
-                                "This \noperation may be performed only on a wallet that " +
-                                "is not\nyet encrypted!",
+                        "The wallet.dat file being used is already encrypted. This\n" +
+                        "operation may be performed only on a wallet that is not\n" +
+                        "yet encrypted!",
                         "Wallet is already encrypted...",
-                        JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.ERROR_MESSAGE
+                 );
+                return;
+            }
+            final PasswordEncryptionDialog passwordEncryptionDialog = new PasswordEncryptionDialog(this.parent);
+            passwordEncryptionDialog.setVisible(true);
+
+            if (!passwordEncryptionDialog.isOKPressed()) {
                 return;
             }
 
-            PasswordEncryptionDialog pd = new PasswordEncryptionDialog(this.parent);
-            pd.setVisible(true);
-
-            if (!pd.isOKPressed()) {
-                return;
-            }
-
-            Cursor oldCursor = this.parent.getCursor();
+            final Cursor oldCursor = this.parent.getCursor();
             try {
-
                 this.parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
                 this.dashboard.stopThreadsAndTimers();
                 this.sendCash.stopThreadsAndTimers();
-
-                this.clientCaller.encryptWallet(pd.getPassword());
-
+                this.cliBridge.encryptWallet(passwordEncryptionDialog.getPassword());
                 this.parent.setCursor(oldCursor);
-            } catch (WalletCallException wce) {
+            } catch (final WalletCallException wce) {
                 this.parent.setCursor(oldCursor);
                 wce.printStackTrace();
 
                 JOptionPane.showMessageDialog(
                         this.parent,
                         "An unexpected error occurred while encrypting the wallet!\n" +
-                                "It is recommended to stop and restart both hushd and the GUI wallet! \n" +
-                                "\n" + wce.getMessage().replace(",", ",\n"),
-                        "Error in encrypting wallet...", JOptionPane.ERROR_MESSAGE);
+                        "It is recommended to stop and restart both hushd and the GUI wallet!\n\n" +
+                        wce.getMessage().replace(",", ",\n"),
+                        "Error in encrypting wallet...",
+                        JOptionPane.ERROR_MESSAGE
+                );
                 return;
             }
 
             JOptionPane.showMessageDialog(
                     this.parent,
                     "The wallet has been encrypted sucessfully and hushd has stopped.\n" +
-                            "The GUI wallet will be stopped as well. Please restart both. In\n" +
-                            "addtion the internal wallet keypool has been flushed. You need\n" +
-                            "to make a new backup..." +
-                            "\n",
-                    "Wallet is now encrypted...", JOptionPane.INFORMATION_MESSAGE);
-
+                    "The GUI wallet will be stopped as well. Please restart both. In\n" +
+                    "addtion the internal wallet keypool has been flushed. You need\n" +
+                    "to make a new backup...\n",
+                    "Wallet is now encrypted...",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
             this.parent.exitProgram();
-
-        } catch (Exception e) {
+        } catch (final Exception e) {
             this.errorReporter.reportError(e, false);
         }
     }
@@ -112,45 +108,43 @@ class WalletOperations {
         try {
             this.issueBackupDirectoryWarning();
 
-            JFileChooser fileChooser = new JFileChooser();
+            final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Backup wallet to file...");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setCurrentDirectory(OSUtil.getUserHomeDirectory());
 
-            int result = fileChooser.showSaveDialog(this.parent);
-
-            if (result != JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showSaveDialog(this.parent) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
-            File f = fileChooser.getSelectedFile();
-
-            Cursor oldCursor = this.parent.getCursor();
+            final Cursor oldCursor = this.parent.getCursor();
+            final String fileName = fileChooser.getSelectedFile().getName();
             try {
                 this.parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-                this.clientCaller.backupWallet(f.getName());
-
+                this.cliBridge.backupWallet(fileName);
                 this.parent.setCursor(oldCursor);
-            } catch (WalletCallException wce) {
+            } catch (final WalletCallException wce) {
                 this.parent.setCursor(oldCursor);
                 wce.printStackTrace();
 
                 JOptionPane.showMessageDialog(
                         this.parent,
-                        "An unexpected error occurred while backing up the wallet!" +
-                                "\n" + wce.getMessage().replace(",", ",\n"),
-                        "Error in backing up wallet...", JOptionPane.ERROR_MESSAGE);
+                        "An unexpected error occurred while backing up the wallet!\n" +
+                        wce.getMessage().replace(",", ",\n"),
+                        "Error in backing up wallet...",
+                        JOptionPane.ERROR_MESSAGE
+                 );
                 return;
             }
 
             JOptionPane.showMessageDialog(
                     this.parent,
-                    "The wallet has been backed up successfully to file: " + f.getName() + "\n" +
-                            "in the backup directory provided to hushd (-exportdir=<dir>).",
-                    "Wallet is backed up...", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (Exception e) {
+                    "The wallet has been backed up successfully to file: " + fileName + "\n" +
+                    "in the backup directory provided to hushd (-exportdir=<dir>).",
+                    "Wallet is backed up...",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (final Exception e) {
             this.errorReporter.reportError(e, false);
         }
     }
@@ -158,112 +152,108 @@ class WalletOperations {
 
     public void exportWalletPrivateKeys() {
         // TODO: Will need corrections once encryption is reenabled!!!
-
         try {
             this.issueBackupDirectoryWarning();
 
-            JFileChooser fileChooser = new JFileChooser();
+            final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Export wallet private keys to file...");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setCurrentDirectory(OSUtil.getUserHomeDirectory());
 
-            int result = fileChooser.showSaveDialog(this.parent);
-
-            if (result != JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showSaveDialog(this.parent) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
-            File f = fileChooser.getSelectedFile();
-
-            Cursor oldCursor = this.parent.getCursor();
+            final Cursor oldCursor = this.parent.getCursor();
+            final String fileName = fileChooser.getSelectedFile().getName();
             try {
                 this.parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-                this.clientCaller.exportWallet(f.getName());
-
+                this.cliBridge.exportWallet(fileName);
                 this.parent.setCursor(oldCursor);
-            } catch (WalletCallException wce) {
+            } catch (final WalletCallException wce) {
                 this.parent.setCursor(oldCursor);
                 wce.printStackTrace();
 
                 JOptionPane.showMessageDialog(
                         this.parent,
-                        "An unexpected error occurred while exporting wallet private keys!" +
-                                "\n" + wce.getMessage().replace(",", ",\n"),
-                        "Error in exporting wallet private keys...", JOptionPane.ERROR_MESSAGE);
+                        "An unexpected error occurred while exporting wallet private keys!\n" +
+                        wce.getMessage().replace(",", ",\n"),
+                        "Error in exporting wallet private keys...",
+                        JOptionPane.ERROR_MESSAGE
+                );
                 return;
             }
 
             JOptionPane.showMessageDialog(
                     this.parent,
                     "The wallet private keys have been exported successfully to file:\n" +
-                            f.getName() + "\n" +
-                            "in the backup directory provided to hushd (-exportdir=<dir>).\n" +
-                            "You need to protect this file from unauthorized access. Anyone who\n" +
-                            "has access to the private keys can spend the HUSH balance!",
-                    "Wallet private key export...", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (Exception e) {
+                    fileName + "\n" +
+                    "in the backup directory provided to hushd (-exportdir=<dir>).\n" +
+                    "You need to protect this file from unauthorized access. Anyone who\n" +
+                    "has access to the private keys can spend the HUSH balance!",
+                    "Wallet private key export...",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (final Exception e) {
             this.errorReporter.reportError(e, false);
         }
     }
 
 
+    // TODO: Will need corrections once encryption is re-enabled!!!
     public void importWalletPrivateKeys() {
-        // TODO: Will need corrections once encryption is re-enabled!!!
-
-        int option = JOptionPane.showConfirmDialog(
+        final int dialogSelection = JOptionPane.showConfirmDialog(
                 this.parent,
                 "Private key import is a potentially slow operation. It may take\n" +
-                        "several minutes during which the GUI will be non-responsive.\n" +
-                        "The data to import must be in the format used by the option:\n" +
-                        "\"Export private keys...\"\n\n" +
-                        "Are you sure you wish to import private keys?",
+                "several minutes during which the GUI will be non-responsive.\n" +
+                "The data to import must be in the format used by the option:\n" +
+                "\"Export private keys...\"\n\n" +
+                "Are you sure you wish to import private keys?",
                 "Private key import notice...",
-                JOptionPane.YES_NO_OPTION);
-        if (option == JOptionPane.NO_OPTION) {
+                JOptionPane.YES_NO_OPTION
+        );
+        if (dialogSelection == JOptionPane.NO_OPTION) {
             return;
         }
 
         try {
-            JFileChooser fileChooser = new JFileChooser();
+            final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Import wallet private keys from file...");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-            int result = fileChooser.showOpenDialog(this.parent);
-
-            if (result != JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showSaveDialog(this.parent) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
-            File f = fileChooser.getSelectedFile();
+            final Cursor oldCursor = this.parent.getCursor();
+            final String fileCanonicalPath = fileChooser.getSelectedFile().getCanonicalPath();
 
-            Cursor oldCursor = this.parent.getCursor();
             try {
                 this.parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-                this.clientCaller.importWallet(f.getCanonicalPath());
-
+                this.cliBridge.importWallet(fileCanonicalPath);
                 this.parent.setCursor(oldCursor);
-            } catch (WalletCallException wce) {
+            } catch (final WalletCallException wce) {
                 this.parent.setCursor(oldCursor);
                 wce.printStackTrace();
 
                 JOptionPane.showMessageDialog(
                         this.parent,
-                        "An unexpected error occurred while importing wallet private keys!" +
-                                "\n" + wce.getMessage().replace(",", ",\n"),
-                        "Error in importing wallet private keys...", JOptionPane.ERROR_MESSAGE);
+                        "An unexpected error occurred while importing wallet private keys!\n" +
+                        wce.getMessage().replace(",", ",\n"),
+                        "Error in importing wallet private keys...",
+                        JOptionPane.ERROR_MESSAGE
+                );
                 return;
             }
 
             JOptionPane.showMessageDialog(
                     this.parent,
                     "Wallet private keys have been imported successfully from location:\n" +
-                            f.getCanonicalPath() + "\n\n",
-                    "Wallet private key import...", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (Exception e) {
+                    fileCanonicalPath + "\n\n",
+                    "Wallet private key import...",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (final Exception e) {
             this.errorReporter.reportError(e, false);
         }
     }
@@ -273,16 +263,16 @@ class WalletOperations {
         if (this.tabs.getSelectedIndex() != 1) {
             JOptionPane.showMessageDialog(
                     this.parent,
-                    "Please select an address in the \"Own addresses\" tab " +
-                            "to view its private key",
-                    "Please select an address...", JOptionPane.INFORMATION_MESSAGE);
+                    "Please select an address in the \"Own addresses\" tab to view its private key",
+                    "Please select an address...",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
             this.tabs.setSelectedIndex(1);
             return;
         }
+        final String selectedAddress = this.addresses.getSelectedAddress();
 
-        String address = this.addresses.getSelectedAddress();
-
-        if (address == null) {
+        if (selectedAddress == null) {
             JOptionPane.showMessageDialog(
                     this.parent,
                     "Please select an address in the table of addresses " +
@@ -293,81 +283,76 @@ class WalletOperations {
 
         try {
             // Check for encrypted wallet
-            final boolean bEncryptedWallet = this.clientCaller.isWalletEncrypted();
-            if (bEncryptedWallet) {
-                final PasswordDialog pd = new PasswordDialog(this.parent);
-                pd.setVisible(true);
+            final boolean walletIsEncrypted = this.cliBridge.isWalletEncrypted();
+            if (walletIsEncrypted) {
+                final PasswordDialog passwordDialog = new PasswordDialog(this.parent);
+                passwordDialog.setVisible(true);
 
-                if (!pd.isOKPressed()) {
+                if (!passwordDialog.isOKPressed()) {
                     return;
                 }
-
-                this.clientCaller.unlockWallet(pd.getPassword());
+                this.cliBridge.unlockWallet(passwordDialog.getPassword());
             }
 
             // TODO: We need a much more precise criterion to distinguish T/Z adresses;
-            boolean isZAddress = address.startsWith("z") && address.length() > 40;
-
-            String privateKey = isZAddress ?
-                                        this.clientCaller.getZPrivateKey(address) : this.clientCaller.getTPrivateKey(address);
+            final boolean isZAddress = selectedAddress.startsWith("z") && selectedAddress.length() > 40;
+            final String privateKey = isZAddress ? this.cliBridge.getZPrivateKey(selectedAddress) : this.cliBridge.getTPrivateKey(selectedAddress);
 
             // Lock the wallet again
-            if (bEncryptedWallet) {
-                this.clientCaller.lockWallet();
+            if (walletIsEncrypted) {
+                this.cliBridge.lockWallet();
             }
 
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(new StringSelection(privateKey), null);
 
             JOptionPane.showMessageDialog(
                     this.parent,
-                    (isZAddress ? "Z (Private)" : "T (Transparent)") + " address:\n" +
-                            address + "\n" +
-                            "has private key:\n" +
-                            privateKey + "\n\n" +
-                            "The private key has also been copied to the clipboard.",
-                    "Private key information", JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception ex) {
-            this.errorReporter.reportError(ex, false);
+                    (isZAddress ? "Z (Private)" : "T (Transparent)") + " address:\n" + selectedAddress + "\n" +
+                    "has private key:\n" + privateKey + "\n\n" +
+                    "The private key has also been copied to the clipboard.",
+                    "Private key information",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (final Exception e) {
+            this.errorReporter.reportError(e, false);
         }
     }
 
 
     public void importSinglePrivateKey() {
         try {
-            SingleKeyImportDialog kd = new SingleKeyImportDialog(this.parent, this.clientCaller);
-            kd.setVisible(true);
-
-        } catch (Exception ex) {
-            this.errorReporter.reportError(ex, false);
+            new SingleKeyImportDialog(this.parent, this.cliBridge).setVisible(true);
+        } catch (final Exception e) {
+            this.errorReporter.reportError(e, false);
         }
     }
 
 
-    private void issueBackupDirectoryWarning()
-            throws IOException {
-        String userDir = OSUtil.getSettingsDirectory();
-        File warningFlagFile = new File(userDir + File.separator + "backupInfoShown.flag");
+    private void issueBackupDirectoryWarning() throws IOException {
+        final String userDirPath = OSUtil.getSettingsDirectory();
+        final File warningFlagFile = new File(userDirPath + File.separator + "backupInfoShown.flag");
         if (warningFlagFile.exists()) {
             return;
         } else {
             warningFlagFile.createNewFile();
         }
-
         JOptionPane.showMessageDialog(
                 this.parent,
                 "For security reasons the wallet may be backed up/private keys exported only if\n" +
-                        "the hushd parameter -exportdir=<dir> has been set. If you started hushd \n" +
-                        "manually, you ought to have provided this parameter. When hushd is started \n" +
-                        "automatically by the GUI wallet the directory provided as parameter to -exportdir\n" +
-                        "is the user home directory: " + OSUtil.getUserHomeDirectory().getCanonicalPath() + "\n" +
-                        "Please navigate to the directory provided as -exportdir=<dir> and select a\n" +
-                        "filename in it to backup/export private keys. If you select another directory\n" +
-                        "instead, the destination file will still end up in the directory provided as \n" +
-                        "-exportdir=<dir>. If this parameter was not provided to hushd, the process\n" +
-                        "will fail with a security check error. The filename needs to consist of only\n" +
-                        "alphanumeric characters (e.g. dot is not allowed).\n\n" +
-                        "(This message will be shown only once)",
-                "Wallet backup directory information", JOptionPane.INFORMATION_MESSAGE);
+                "the hushd parameter -exportdir=<dir> has been set. If you started hushd\n" +
+                "manually, you ought to have provided this parameter. When hushd is started\n" +
+                "automatically by the GUI wallet the directory provided as parameter to -exportdir\n" +
+                "is the user home directory: " + OSUtil.getUserHomeDirectory().getCanonicalPath() + "\n" +
+                "Please navigate to the directory provided as -exportdir=<dir> and select a\n" +
+                "filename in it to backup/export private keys. If you select another directory\n" +
+                "instead, the destination file will still end up in the directory provided as \n" +
+                "-exportdir=<dir>. If this parameter was not provided to hushd, the process\n" +
+                "will fail with a security check error. The filename needs to consist of only\n" +
+                "alphanumeric characters (e.g. dot is not allowed).\n\n" +
+                "(This message will be shown only once)",
+                "Wallet backup directory information",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 }

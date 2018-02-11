@@ -14,65 +14,58 @@ import java.awt.event.KeyEvent;
 class AddressTable extends DataTable {
     AddressTable(final Object[][] rowData,
                  final Object[] columnNames,
-                 final HushCommandLineBridge caller
+                 final HushCommandLineBridge cliBridge
     ) {
         super(rowData, columnNames);
-        int accelaratorKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        final int acceleratorKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
-        JMenuItem obtainPrivateKey = new JMenuItem("Obtain private key...");
-        obtainPrivateKey.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, accelaratorKeyMask));
+        final JMenuItem obtainPrivateKey = new JMenuItem("Obtain private key...");
+        obtainPrivateKey.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, acceleratorKeyMask));
         popupMenu.add(obtainPrivateKey);
 
-        obtainPrivateKey.addActionListener(e -> {
-            if ((lastRow >= 0) && (lastColumn >= 0)) {
-                try {
-                    String address = AddressTable.this.getModel().getValueAt(lastRow, 2).toString();
+        obtainPrivateKey.addActionListener(event -> {
+            if (lastRow < 0 || lastColumn < 0) {
+                // log something?
+                return;
+            }
+            try {
+                final String address = AddressTable.this.getModel().getValueAt(lastRow, 2).toString();
 
-                    // TODO: We need a much more precise criterion to distinguish T/Z adresses;
-                    boolean isZAddress = address.startsWith("z") && address.length() > 40;
+                // TODO: We need a much more precise criterion to distinguish T/Z adresses;
+                final boolean isZAddress = address.startsWith("z") && address.length() > 40;
 
-                    // Check for encrypted wallet
-                    final boolean bEncryptedWallet = caller.isWalletEncrypted();
-                    if (bEncryptedWallet) {
-                        PasswordDialog pd = new PasswordDialog((JFrame) (AddressTable.this.getRootPane().getParent()));
-                        pd.setVisible(true);
+                // Check for encrypted wallet
+                final boolean walletIsEncrypted = cliBridge.isWalletEncrypted();
+                if (walletIsEncrypted) {
+                    final PasswordDialog dialog = new PasswordDialog((JFrame) (AddressTable.this.getRootPane().getParent()));
+                    dialog.setVisible(true);
 
-                        if (!pd.isOKPressed()) {
-                            return;
-                        }
-
-                        caller.unlockWallet(pd.getPassword());
+                    if (!dialog.isOKPressed()) {
+                        return;
                     }
-
-                    String privateKey = isZAddress ?
-                                                caller.getZPrivateKey(address) : caller.getTPrivateKey(address);
-
-                    // Lock the wallet again
-                    if (bEncryptedWallet) {
-                        caller.lockWallet();
-                    }
-
-                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                    clipboard.setContents(new StringSelection(privateKey), null);
-
-                    JOptionPane.showMessageDialog(
-                            AddressTable.this.getRootPane().getParent(),
-                            (isZAddress ? "Z (Private)" : "T (Transparent)") + " address:\n" +
-                                    address + "\n" +
-                                    "has private key:\n" +
-                                    privateKey + "\n\n" +
-                                    "The private key has also been copied to the clipboard.",
-                            "Private key information", JOptionPane.INFORMATION_MESSAGE);
-
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    // TODO: report exception to user
+                    cliBridge.unlockWallet(dialog.getPassword());
                 }
-            } else {
-                // Log perhaps
+
+                final String privateKey = isZAddress ? cliBridge.getZPrivateKey(address) : cliBridge.getTPrivateKey(address);
+
+                // Lock the wallet again
+                if (walletIsEncrypted) {
+                    cliBridge.lockWallet();
+                }
+                final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(new StringSelection(privateKey), null);
+
+                JOptionPane.showMessageDialog(
+                    AddressTable.this.getRootPane().getParent(),
+                    (isZAddress ? "Z (Private)" : "T (Transparent)") + " address:\n" + address + "\n" +
+                    "has private key:\n" + privateKey + "\n\n" + "The private key has also been copied to the clipboard.",
+                    "Private key information",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            } catch (final Exception e) {
+                e.printStackTrace();
+                // TODO: report exception to user
             }
         });
-    } // End constructor
-
+    }
 }

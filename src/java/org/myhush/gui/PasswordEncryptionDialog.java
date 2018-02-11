@@ -11,24 +11,24 @@ import java.awt.*;
 /**
  * Dialog to get the user password - to encrypt a wallet
  */
-public class PasswordEncryptionDialog
-        extends PasswordDialog {
+public class PasswordEncryptionDialog extends PasswordDialog {
     private JTextField passwordConfirmationField;
 
-    public PasswordEncryptionDialog(JFrame parent) {
+    PasswordEncryptionDialog(JFrame parent) {
         super(parent);
 
         this.upperLabel.setText(
                 "<html>The wallet.dat file will be encrypted with a password. If the operation is successful, " +
-                        "hushd will automatically stop and will need to be restarted. The GUI wallet will also be stopped " +
-                        "and will need to be restarted. Please enter the password:</html>");
+                "hushd will automatically stop and will need to be restarted. The GUI wallet will also be stopped " +
+                "and will need to be restarted. Please enter the password:</html>"
+        );
 
-        JLabel confLabel = new JLabel("Confirmation: ");
+        final JLabel confLabel = new JLabel("Confirmation: ");
         this.freeSlotPanel.add(confLabel);
         this.freeSlotPanel.add(passwordConfirmationField = new JPasswordField(30));
         this.passwordLabel.setPreferredSize(confLabel.getPreferredSize());
 
-        JLabel dividerLabel = new JLabel("   ");
+        final JLabel dividerLabel = new JLabel("   ");
         dividerLabel.setFont(new Font("Helvetica", Font.PLAIN, 8));
         this.freeSlotPanel2.add(dividerLabel);
 
@@ -39,26 +39,29 @@ public class PasswordEncryptionDialog
 
 
     protected void processOK() {
-        String password = this.passwordField.getText();
-        String confirmation = this.passwordConfirmationField.getText();
-
-        if (password == null) {
+        final String password;
+        if (this.passwordField.getText() == null) {
             password = "";
+        } else {
+            password = this.passwordField.getText();
         }
 
-        if (confirmation == null) {
+        final String confirmation;
+        if (this.passwordConfirmationField.getText() == null) {
             confirmation = "";
+        } else {
+            confirmation = this.passwordConfirmationField.getText();
         }
 
         if (!password.equals(confirmation)) {
             JOptionPane.showMessageDialog(
                     this.getParent(),
-                    "The password and the confirmation do not match!", "Password mismatch...",
-                    JOptionPane.ERROR_MESSAGE);
+                    "The password and the confirmation do not match!",
+                    "Password mismatch...",
+                    JOptionPane.ERROR_MESSAGE
+            );
             return;
         }
-
         super.processOK();
     }
-
 }
