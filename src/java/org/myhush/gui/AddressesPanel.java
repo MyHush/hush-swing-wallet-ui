@@ -18,9 +18,9 @@ import java.util.*;
  * Addresses panel - shows T/Z addresses and their balances.
  */
 class AddressesPanel extends WalletTabPanel {
-    private String[][] lastAddressBalanceData;
+    private String[][] lastAddressBalanceData; // BRX-TODO: Encapsulate
     private final JFrame parentFrame;
-    private final HushCommandLineBridge clientCaller;
+    private final HushCommandLineBridge cliBridge;
     private final StatusUpdateErrorReporter errorReporter;
     private JTable addressBalanceTable;
     private JScrollPane addressBalanceTablePane;
@@ -32,68 +32,72 @@ class AddressesPanel extends WalletTabPanel {
     // and should be remembered as invalid here
     private final Map<String, Boolean> validationMap = new HashMap<>();
 
-    AddressesPanel(JFrame parentFrame, HushCommandLineBridge clientCaller, StatusUpdateErrorReporter errorReporter)
-            throws IOException, InterruptedException, HushCommandLineBridge.WalletCallException {
+    AddressesPanel(
+            final JFrame parentFrame,
+            final HushCommandLineBridge cliBridge,
+            final StatusUpdateErrorReporter errorReporter
+    ) throws IOException, InterruptedException, HushCommandLineBridge.WalletCallException {
         this.parentFrame = parentFrame;
-        this.clientCaller = clientCaller;
+        this.cliBridge = cliBridge;
         this.errorReporter = errorReporter;
 
         this.lastInteractiveRefresh = System.currentTimeMillis();
 
         // Build content
-        JPanel addressesPanel = this;
+        final JPanel addressesPanel = this;
         addressesPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         addressesPanel.setLayout(new BorderLayout(0, 0));
 
         // Build panel of buttons
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 3, 3));
         buttonPanel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
 
-        JButton newTAddressButton = new JButton("New T (Transparent) address");
+        final JButton newTAddressButton = new JButton("New T (Transparent) address");
         buttonPanel.add(newTAddressButton);
-        JButton newZAddressButton = new JButton("New Z (Private) address");
+        final JButton newZAddressButton = new JButton("New Z (Private) address");
         buttonPanel.add(newZAddressButton);
         buttonPanel.add(new JLabel("           "));
-        JButton refreshButton = new JButton("Refresh");
+        final JButton refreshButton = new JButton("Refresh");
         buttonPanel.add(refreshButton);
 
         addressesPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         // Table of addresses
         lastAddressBalanceData = getAddressBalanceDataFromWallet();
-        addressesPanel.add(addressBalanceTablePane = new JScrollPane(
-                        addressBalanceTable = this.createAddressBalanceTable(lastAddressBalanceData)),
-                BorderLayout.CENTER);
+        addressesPanel.add(
+                addressBalanceTablePane = new JScrollPane(
+                        addressBalanceTable = this.createAddressBalanceTable(lastAddressBalanceData)
+                ),
+                BorderLayout.CENTER
+        );
 
-        JPanel warningPanel = new JPanel();
+        final JPanel warningPanel = new JPanel();
         warningPanel.setLayout(new BorderLayout(3, 3));
         warningPanel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
-        JLabel warningL = new JLabel(
+        final JLabel warningL = new JLabel(
                 "<html><span style=\"font-size:8px;\">" +
-                        "* If the balance of an address is flagged as not confirmed, the address is currently taking " +
-                        "part in a transaction. The shown balance then is the expected value it will have when " +
-                        "the transaction is confirmed. " +
-                        "The average confirmation time is 2.5 min." +
-                        "</span>");
+                "* If the balance of an address is flagged as not confirmed, the address is currently taking " +
+                "part in a transaction. The shown balance then is the expected value it will have when " +
+                "the transaction is confirmed. The average confirmation time is 2.5 min.</span>"
+        );
         warningPanel.add(warningL, BorderLayout.NORTH);
         addressesPanel.add(warningPanel, BorderLayout.NORTH);
 
         // Thread and timer to update the address/balance table
         this.balanceGatheringThread = new DataGatheringThread<>(
                 () -> {
-                    long start = System.currentTimeMillis();
-                    String[][] data = AddressesPanel.this.getAddressBalanceDataFromWallet();
-                    long end = System.currentTimeMillis();
+                    final long start = System.currentTimeMillis();
+                    final String[][] data = AddressesPanel.this.getAddressBalanceDataFromWallet();
+                    final long end = System.currentTimeMillis();
                     System.out.println("Gathering of address/balance table data done in " + (end - start) + "ms.");
-
                     return data;
                 },
                 this.errorReporter, 25000
         );
         this.threads.add(this.balanceGatheringThread);
 
-        ActionListener alBalances = actionEvent -> {
+        final ActionListener alBalances = actionEvent -> {
             try {
                 AddressesPanel.this.updateWalletAddressBalanceTableAutomated();
             } catch (final Exception e) {
@@ -106,26 +110,19 @@ class AddressesPanel extends WalletTabPanel {
         this.timers.add(timer);
 
         // Button actions
-        refreshButton.addActionListener(e -> {
-            Cursor oldCursor = null;
+        refreshButton.addActionListener(event -> {
+            final Cursor oldCursor = AddressesPanel.this.getCursor();
             try {
                 // TODO: dummy progress bar ... maybe
-                oldCursor = AddressesPanel.this.getCursor();
                 AddressesPanel.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
                 AddressesPanel.this.updateWalletAddressBalanceTableInteractive();
-
                 AddressesPanel.this.setCursor(oldCursor);
-            } catch (Exception ex) {
-                if (oldCursor != null) {
-                    AddressesPanel.this.setCursor(oldCursor);
-                }
-
-                ex.printStackTrace();
-                AddressesPanel.this.errorReporter.reportError(ex, false);
+            } catch (final Exception e) {
+                AddressesPanel.this.setCursor(oldCursor);
+                e.printStackTrace();
+                AddressesPanel.this.errorReporter.reportError(e, false);
             }
         });
-
         newTAddressButton.addActionListener(actionEvent -> createNewAddress(false));
         newZAddressButton.addActionListener(actionEvent -> createNewAddress(true));
     }
@@ -139,36 +136,34 @@ class AddressesPanel extends WalletTabPanel {
         return null;
     }
 
-    private void createNewAddress(boolean isZAddress) {
+    private void createNewAddress(final boolean isZAddress) {
         try {
             // Check for encrypted wallet
-            final boolean bEncryptedWallet = this.clientCaller.isWalletEncrypted();
-            if (bEncryptedWallet && isZAddress) {
-                PasswordDialog pd = new PasswordDialog((JFrame) (this.getRootPane().getParent()));
-                pd.setVisible(true);
+            final boolean walletIsEncrypted = this.cliBridge.isWalletEncrypted();
+            if (walletIsEncrypted && isZAddress) {
+                final PasswordDialog dialog = new PasswordDialog((JFrame) (this.getRootPane().getParent()));
+                dialog.setVisible(true);
 
-                if (!pd.isOKPressed()) {
+                if (!dialog.isOKPressed()) {
                     return;
                 }
-
-                this.clientCaller.unlockWallet(pd.getPassword());
+                this.cliBridge.unlockWallet(dialog.getPassword());
             }
 
-            String address = this.clientCaller.createNewAddress(isZAddress);
+            final String address = this.cliBridge.createNewAddress(isZAddress);
 
             // Lock the wallet again
-            if (bEncryptedWallet && isZAddress) {
-                this.clientCaller.lockWallet();
+            if (walletIsEncrypted && isZAddress) {
+                this.cliBridge.lockWallet();
             }
 
             JOptionPane.showMessageDialog(
-                    this.getRootPane().getParent(),
-                    "A new " + (isZAddress ? "Z (Private)" : "T (Transparent)")
-                            + " address has been created cuccessfully:\n" + address,
-                    "Address created", JOptionPane.INFORMATION_MESSAGE);
-
+                this.getRootPane().getParent(),
+                "A new " + (isZAddress ? "Z (Private)" : "T (Transparent)") + " address has been created cuccessfully:\n" + address,
+                "Address created", JOptionPane.INFORMATION_MESSAGE
+            );
             this.updateWalletAddressBalanceTableInteractive();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
             AddressesPanel.this.errorReporter.reportError(e, false);
         }
@@ -179,14 +174,17 @@ class AddressesPanel extends WalletTabPanel {
             throws HushCommandLineBridge.WalletCallException, IOException, InterruptedException {
         this.lastInteractiveRefresh = System.currentTimeMillis();
 
-        String[][] newAddressBalanceData = this.getAddressBalanceDataFromWallet();
+        final String[][] newAddressBalanceData = this.getAddressBalanceDataFromWallet();
 
         if (!Arrays.deepEquals(lastAddressBalanceData, newAddressBalanceData)) {
             System.out.println("Updating table of addresses/balances I...");
             this.remove(addressBalanceTablePane);
-            this.add(addressBalanceTablePane = new JScrollPane(
-                            addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
-                    BorderLayout.CENTER);
+            this.add(
+                addressBalanceTablePane = new JScrollPane(
+                    addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)
+                ),
+                BorderLayout.CENTER
+            );
             lastAddressBalanceData = newAddressBalanceData;
 
             this.validate();
@@ -201,15 +199,17 @@ class AddressesPanel extends WalletTabPanel {
         if ((System.currentTimeMillis() - lastInteractiveRefresh) < (60 * 1000)) {
             return;
         }
-
-        String[][] newAddressBalanceData = this.balanceGatheringThread.getLastData();
+        final String[][] newAddressBalanceData = this.balanceGatheringThread.getLastData();
 
         if ((newAddressBalanceData != null) && !Arrays.deepEquals(lastAddressBalanceData, newAddressBalanceData)) {
             System.out.println("Updating table of addresses/balances A...");
             this.remove(addressBalanceTablePane);
-            this.add(addressBalanceTablePane = new JScrollPane(
-                            addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)),
-                    BorderLayout.CENTER);
+            this.add(
+                addressBalanceTablePane = new JScrollPane(
+                    addressBalanceTable = this.createAddressBalanceTable(newAddressBalanceData)
+                ),
+                BorderLayout.CENTER
+            );
             lastAddressBalanceData = newAddressBalanceData;
             this.validate();
             this.repaint();
@@ -217,9 +217,9 @@ class AddressesPanel extends WalletTabPanel {
     }
 
 
-    private JTable createAddressBalanceTable(String rowData[][]) {
-        String columnNames[] = { "Balance", "Confirmed?", "Address" };
-        JTable table = new AddressTable(rowData, columnNames, this.clientCaller);
+    private JTable createAddressBalanceTable(final String rowData[][]) {
+        final String columnNames[] = { "Balance", "Confirmed?", "Address" };
+        final JTable table = new AddressTable(rowData, columnNames, this.cliBridge);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         table.getColumnModel().getColumn(0).setPreferredWidth(160);
         table.getColumnModel().getColumn(1).setPreferredWidth(140);
@@ -232,96 +232,102 @@ class AddressesPanel extends WalletTabPanel {
     private String[][] getAddressBalanceDataFromWallet()
             throws HushCommandLineBridge.WalletCallException, IOException, InterruptedException {
         // Z Addresses - they are OK
-        String[] zAddresses = clientCaller.getWalletZAddresses();
+        final String[] zAddresses = cliBridge.getWalletZAddresses();
+
+        // BRX-TODO: At a glance, this doesn't look like it makes sense -- why are we copying arrays
+        // BRX-TODO: then merging them?
 
         // T Addresses listed with the list received by addr comamnd
-        String[] tAddresses = this.clientCaller.getWalletAllPublicAddresses();
-        Set<String> tStoredAddressSet = new HashSet<>();
+        final String[] tAddresses = this.cliBridge.getWalletAllPublicAddresses();
+        final Set<String> tStoredAddressSet = new HashSet<>();
         Collections.addAll(tStoredAddressSet, tAddresses);
 
         // T addresses with unspent outputs - just in case they are different
-        String[] tAddressesWithUnspentOuts = this.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
-        Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
+        final String[] tAddressesWithUnspentOuts = this.cliBridge.getWalletPublicAddressesWithUnspentOutputs();
+        final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
         Collections.addAll(tAddressSetWithUnspentOuts, tAddressesWithUnspentOuts);
 
         // Combine all known T addresses
-        Set<String> tAddressesCombined = new HashSet<>();
+        final Set<String> tAddressesCombined = new HashSet<>();
         tAddressesCombined.addAll(tStoredAddressSet);
         tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
 
-        String[][] addressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
+        // BRX-TODO: Rather than need this strange counter `i` below, move this to a List of Lists (or an array of Lists)
+        // BRX-TODO: and just append, we can return whatever structures we prefer
+        final String[][] addressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
 
         // Format double numbers - else sometimes we get exponential notation 1E-4 ZEC
-        DecimalFormat df = new DecimalFormat("########0.00######");
+        final DecimalFormat df = new DecimalFormat("########0.00######");
 
-        String confirmed = "\u2690";
-        String notConfirmed = "\u2691";
+        final String confirmed;
+        final String notConfirmed;
 
         // Windows does not support the flag symbol (Windows 7 by default)
         // TODO: isolate OS-specific symbol codes in a separate class
-        OSUtil.OS_TYPE os = OSUtil.getOSType();
-        if (os == OSUtil.OS_TYPE.WINDOWS) {
+        if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
             confirmed = " \u25B7";
             notConfirmed = " \u25B6";
+        } else {
+            confirmed = "\u2690";
+            notConfirmed = "\u2691";
         }
 
         int i = 0;
 
-        for (String address : tAddressesCombined) {
+        for (final String address : tAddressesCombined) {
+            // BRX-TODO: Just don't add invalid addresses? (after changing structure above to Lists)
             String addressToDisplay = address;
+
             // Make sure the current address is not watch-only or invalid
             if (!this.validationMap.containsKey(address)) {
-                boolean validationResult = this.clientCaller.isWatchOnlyOrInvalidAddress(address);
+                final boolean validationResult = this.cliBridge.isWatchOnlyOrInvalidAddress(address);
                 this.validationMap.put(address, validationResult);
 
                 if (validationResult) {
                     JOptionPane.showMessageDialog(
-                            this.parentFrame,
-                            "An invalid or watch-only address exists in the wallet:" + "\n" +
-                                    address + "\n\n" +
-                                    "The GUI wallet software cannot operate properly with addresses that are invalid or\n" +
-                                    "exist in the wallet as watch-only addresses. Do NOT use this address as a destination\n" +
-                                    "address for payment operations!",
-                            "Error: invalid or watch-only address exists!",
-                            JOptionPane.ERROR_MESSAGE);
+                        this.parentFrame,
+                        "An invalid or watch-only address exists in the wallet:" + "\n" + address + "\n\n" +
+                        "The GUI wallet software cannot operate properly with addresses that are invalid or\n" +
+                        "exist in the wallet as watch-only addresses. Do NOT use this address as a destination\n" +
+                        "address for payment operations!",
+                        "Error: invalid or watch-only address exists!",
+                        JOptionPane.ERROR_MESSAGE
+                    );
                 }
             }
 
-            boolean watchOnlyOrInvalid = this.validationMap.get(address);
+            final boolean watchOnlyOrInvalid = this.validationMap.get(address);
             if (watchOnlyOrInvalid) {
                 System.out.println("The following address is invalid or a watch-only address: {0}. It will not be displayed!" + address);
                 addressToDisplay = "<INVALID OR WATCH-ONLY ADDRESS> !!!";
             }
             // End of check for invalid/watch only addresses
 
-            String confirmedBalance = this.clientCaller.getBalanceForAddress(address);
-            String unconfirmedBalance = this.clientCaller.getUnconfirmedBalanceForAddress(address);
-            boolean isConfirmed = (confirmedBalance.equals(unconfirmedBalance));
-            String balanceToShow = df.format(Double.valueOf(
-                    isConfirmed ? confirmedBalance : unconfirmedBalance));
+            final String confirmedBalance = this.cliBridge.getBalanceForAddress(address);
+            final String unconfirmedBalance = this.cliBridge.getUnconfirmedBalanceForAddress(address);
+            final boolean isConfirmed = (confirmedBalance.equals(unconfirmedBalance));
+            final String balanceToShow = df.format(Double.valueOf(isConfirmed ? confirmedBalance : unconfirmedBalance));
 
-            addressBalances[i++] = new String[] {
+            addressBalances[i++] = new String[]{
                    balanceToShow,
                    isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
                    addressToDisplay
             };
         }
 
-        for (String address : zAddresses) {
-            String confirmedBalance = this.clientCaller.getBalanceForAddress(address);
-            String unconfirmedBalance = this.clientCaller.getUnconfirmedBalanceForAddress(address);
-            boolean isConfirmed = (confirmedBalance.equals(unconfirmedBalance));
-            String balanceToShow = df.format(Double.valueOf(
-                    isConfirmed ? confirmedBalance : unconfirmedBalance));
+        // BRX-TODO: Logic is duplicated here as just above, pull out?
+        for (final String address : zAddresses) {
+            final String confirmedBalance = this.cliBridge.getBalanceForAddress(address);
+            final String unconfirmedBalance = this.cliBridge.getUnconfirmedBalanceForAddress(address);
+            final boolean isConfirmed = (confirmedBalance.equals(unconfirmedBalance));
+            final String balanceToShow = df.format(Double.valueOf(isConfirmed ? confirmedBalance : unconfirmedBalance));
 
-            addressBalances[i++] = new String[] {
+            addressBalances[i++] = new String[]{
                     balanceToShow,
                     isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
                     address
             };
         }
-
         return addressBalances;
     }
-
 }

@@ -15,13 +15,14 @@ class PasswordDialog extends JDialog {
     private boolean isOKPressed = false;
     private String password = null;
 
-    JLabel passwordLabel;
-    JTextField passwordField;
+    // Used by child classes (TODO: refactor me)
+    final JLabel passwordLabel;
+    final JTextField passwordField;
     final JLabel upperLabel;
     final JPanel freeSlotPanel;
     final JPanel freeSlotPanel2;
 
-    PasswordDialog(JFrame parent) {
+    PasswordDialog(final JFrame parent) {
         super(parent);
 
         this.setTitle("Password...");
@@ -29,14 +30,16 @@ class PasswordDialog extends JDialog {
         this.setModal(true);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel controlsPanel = new JPanel();
+        final JPanel controlsPanel = new JPanel();
         controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.Y_AXIS));
         controlsPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JPanel tempPanel = new JPanel(new BorderLayout(0, 0));
-        tempPanel.add(this.upperLabel = new JLabel("<html>The wallet is encrypted and protected with a password. " +
-                                                           "Please enter the password to unlock it temporarily during " +
-                                                           "the operation</html>"), BorderLayout.CENTER);
+        tempPanel.add(this.upperLabel = new JLabel(
+                "<html>The wallet is encrypted and protected with a password. " +
+                "Please enter the password to unlock it temporarily during " +
+                "the operation</html>"
+        ), BorderLayout.CENTER);
         controlsPanel.add(tempPanel);
 
         JLabel dividerLabel = new JLabel("   ");
@@ -60,30 +63,29 @@ class PasswordDialog extends JDialog {
 
         tempPanel = new JPanel(new BorderLayout(0, 0));
         tempPanel.add(new JLabel(
-                        "<html><span style=\"font-weight:bold\">" +
-                                "WARNING: Never enter your password on a public/shared " +
-                                "computer or one that you suspect has been infected with malware! " +
-                                "</span></html>"
-                ), BorderLayout.CENTER
-                     );
+                "<html><span style=\"font-weight:bold\">" +
+                "WARNING: Never enter your password on a public/shared " +
+                "computer or one that you suspect has been infected with malware! " +
+                "</span></html>"
+        ), BorderLayout.CENTER);
         controlsPanel.add(tempPanel);
 
         this.getContentPane().setLayout(new BorderLayout(0, 0));
         this.getContentPane().add(controlsPanel, BorderLayout.NORTH);
 
         // Form buttons
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 3, 3));
-        JButton okButon = new JButton("OK");
-        buttonPanel.add(okButon);
+        final JButton okButton = new JButton("OK");
+        buttonPanel.add(okButton);
         buttonPanel.add(new JLabel("   "));
-        JButton cancelButon = new JButton("Cancel");
+        final JButton cancelButon = new JButton("Cancel");
         buttonPanel.add(cancelButon);
         this.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
-        okButon.addActionListener(e -> PasswordDialog.this.processOK());
+        okButton.addActionListener(event -> PasswordDialog.this.processOK());
 
-        cancelButon.addActionListener(e -> {
+        cancelButon.addActionListener(event -> {
             PasswordDialog.this.setVisible(false);
             PasswordDialog.this.dispose();
 
@@ -97,16 +99,17 @@ class PasswordDialog extends JDialog {
     }
 
     void processOK() {
-        String pass = PasswordDialog.this.passwordField.getText();
+        final String pass = PasswordDialog.this.passwordField.getText();
 
-        if ((pass == null) || (pass.trim().length() <= 0)) {
+        if ((pass == null) || (pass.trim().length() == 0)) {
             JOptionPane.showMessageDialog(
                     PasswordDialog.this.getParent(),
-                    "The password is empty. Please enter it into the text field.", "Empty...",
-                    JOptionPane.ERROR_MESSAGE);
+                    "The password is empty. Please enter it into the text field.",
+                    "Empty...",
+                    JOptionPane.ERROR_MESSAGE
+            );
             return;
         }
-
         PasswordDialog.this.setVisible(false);
         PasswordDialog.this.dispose();
 

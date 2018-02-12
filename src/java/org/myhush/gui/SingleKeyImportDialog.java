@@ -15,21 +15,21 @@ class SingleKeyImportDialog extends JDialog {
     private final JTextField keyField;
     private final JProgressBar progress;
 
-    private final HushCommandLineBridge caller;
+    private final HushCommandLineBridge cliBridge;
 
     private final JButton okButton;
-    private final JButton cancelButon;
+    private final JButton cancelButton;
 
-    SingleKeyImportDialog(JFrame parent, HushCommandLineBridge caller) {
+    SingleKeyImportDialog(final JFrame parent, final HushCommandLineBridge cliBridge) {
         super(parent);
-        this.caller = caller;
+        this.cliBridge = cliBridge;
 
         this.setTitle("Enter private key...");
         this.setLocation(parent.getLocation().x + 50, parent.getLocation().y + 50);
         this.setModal(true);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel controlsPanel = new JPanel();
+        final JPanel controlsPanel = new JPanel();
         controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.Y_AXIS));
         controlsPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
@@ -52,13 +52,13 @@ class SingleKeyImportDialog extends JDialog {
 
         tempPanel = new JPanel(new BorderLayout(0, 0));
         tempPanel.add(new JLabel(
-                        "<html><span style=\"font-weight:bold\">" +
-                                "Warning:</span> Private key import is a slow operation that " +
-                                "requires blockchain rescanning (may take many minutes). The GUI " +
-                                "will not be usable for other functions during this time</html>"
+                        "<html><span style=\"font-weight:bold\">Warning:</span> " +
+                        "Private key import is a slow operation that " +
+                        "requires blockchain rescanning (may take many minutes). The GUI " +
+                        "will not be usable for other functions during this time</html>"
                 ),
                 BorderLayout.CENTER
-                     );
+        );
         controlsPanel.add(tempPanel);
 
         dividerLabel = new JLabel("   ");
@@ -73,18 +73,18 @@ class SingleKeyImportDialog extends JDialog {
         this.getContentPane().add(controlsPanel, BorderLayout.NORTH);
 
         // Form buttons
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 3, 3));
         okButton = new JButton("Import");
         buttonPanel.add(okButton);
         buttonPanel.add(new JLabel("   "));
-        cancelButon = new JButton("Cancel");
-        buttonPanel.add(cancelButon);
+        cancelButton = new JButton("Cancel");
+        buttonPanel.add(cancelButton);
         this.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
-        okButton.addActionListener(e -> SingleKeyImportDialog.this.processOK());
+        okButton.addActionListener(event -> SingleKeyImportDialog.this.processOK());
 
-        cancelButon.addActionListener(e -> {
+        cancelButton.addActionListener(event -> {
             SingleKeyImportDialog.this.setVisible(false);
             SingleKeyImportDialog.this.dispose();
         });
@@ -98,11 +98,12 @@ class SingleKeyImportDialog extends JDialog {
     private void processOK() {
         final String key = SingleKeyImportDialog.this.keyField.getText();
 
-        if ((key == null) || (key.trim().length() <= 0)) {
+        if ((key == null) || (key.trim().length() == 0)) {
             JOptionPane.showMessageDialog(
                     SingleKeyImportDialog.this.getParent(),
                     "The key is empty. Please enter it into the text field.", "Empty...",
-                    JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.ERROR_MESSAGE
+            );
             return;
         }
 
@@ -112,31 +113,32 @@ class SingleKeyImportDialog extends JDialog {
         this.progress.setValue(1);
 
         this.okButton.setEnabled(false);
-        this.cancelButon.setEnabled(false);
+        this.cancelButton.setEnabled(false);
 
         SingleKeyImportDialog.this.keyField.setEditable(false);
 
         new Thread(() -> {
             try {
-                SingleKeyImportDialog.this.caller.importPrivateKey(key);
+                SingleKeyImportDialog.this.cliBridge.importPrivateKey(key);
 
                 JOptionPane.showMessageDialog(
                         SingleKeyImportDialog.this,
-                        "The private key:\n" +
-                                key + "\n" +
-                                "has been imported successfully.",
+                        "The private key:\n" + key + "\n" + "has been imported successfully.",
                         "Private key imported successfully...",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception e) {
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } catch (final Exception e) {
                 e.printStackTrace();
 
                 JOptionPane.showMessageDialog(
                         SingleKeyImportDialog.this.getRootPane().getParent(),
                         "An error occurred when importing private key. Error message is:\n" +
-                                e.getClass().getName() + ":\n" + e.getMessage() + "\n\n" +
-                                "Please ensure that hushd is running and the key is in the correct \n" +
-                                "form. You may try again later...\n",
-                        "Error in importing private key", JOptionPane.ERROR_MESSAGE);
+                        e.getClass().getName() + ":\n" + e.getMessage() + "\n\n" +
+                        "Please ensure that hushd is running and the key is in the correct \n" +
+                        "form. You may try again later...\n",
+                        "Error in importing private key",
+                        JOptionPane.ERROR_MESSAGE
+                );
             } finally {
                 SingleKeyImportDialog.this.setVisible(false);
                 SingleKeyImportDialog.this.dispose();

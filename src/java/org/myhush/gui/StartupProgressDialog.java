@@ -21,10 +21,10 @@ class StartupProgressDialog extends JFrame {
     private static final int STARTUP_ERROR_CODE = -28;
 
     private final JLabel progressLabel = new JLabel();
-    private final HushCommandLineBridge clientCaller;
+    private final HushCommandLineBridge cliBridge;
 
-    StartupProgressDialog(final HushCommandLineBridge clientCaller) {
-        this.clientCaller = clientCaller;
+    StartupProgressDialog(final HushCommandLineBridge cliBridge) {
+        this.cliBridge = cliBridge;
 
         final URL iconUrl = this.getClass().getClassLoader().getResource("images/hush-logo.png");
         final JLabel imageLabel = new JLabel();
@@ -56,7 +56,7 @@ class StartupProgressDialog extends JFrame {
     public void waitForStartup() throws Exception {
         // special handling of Windows app launch
         if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
-            ProvingKeyFetcher keyFetcher = new ProvingKeyFetcher();
+            final ProvingKeyFetcher keyFetcher = new ProvingKeyFetcher();
             keyFetcher.fetchIfMissing(this);
             if ("true".equalsIgnoreCase(System.getProperty("launching.from.appbundle"))) {
                 performWinBundleLaunch();
@@ -65,7 +65,7 @@ class StartupProgressDialog extends JFrame {
 
         System.out.println("Splash: checking if hushd is already running...");
         try {
-            clientCaller.getDaemonRawRuntimeInfo();
+            cliBridge.getDaemonRawRuntimeInfo();
             System.out.println("Splash: hushd already running...");
         } catch (final HushCommandLineBridge.DaemonUnavailableException e) {
             System.out.println("Splash: hushd will be started...");
@@ -83,7 +83,7 @@ class StartupProgressDialog extends JFrame {
      * @throws DaemonStartupFailureException Upon failing to start the daemon in a timely manner
      */
     private Process startDaemon() throws IOException, InterruptedException, DaemonStartupFailureException {
-        final Process daemonProcess = clientCaller.startDaemon();
+        final Process daemonProcess = cliBridge.startDaemon();
 
         final String loadingMessage = "Waiting for daemon to start...";
         setProgressText(loadingMessage);
@@ -96,13 +96,13 @@ class StartupProgressDialog extends JFrame {
 
             final JsonObject daemonInfo;
             try {
-                daemonInfo = clientCaller.getDaemonRawRuntimeInfo();
+                daemonInfo = cliBridge.getDaemonRawRuntimeInfo();
             } catch (final HushCommandLineBridge.DaemonUnavailableException e) {
                 setProgressText(loadingMessage + " (" + (iterationLimit - iteration) + ")");
 
                 // wait iterationLimit * POLL_PERIOD_MS intervals before asking user what they want to do
                 if (iteration > iterationLimit) {
-                    int dialogResult = JOptionPane.showConfirmDialog(null, "Daemon startup has timed out, do you want to continue waiting?", "Warning", JOptionPane.YES_NO_OPTION);
+                    final int dialogResult = JOptionPane.showConfirmDialog(null, "Daemon startup has timed out, do you want to continue waiting?", "Warning", JOptionPane.YES_NO_OPTION);
                     if (dialogResult != JOptionPane.YES_OPTION) {
                         throw new DaemonStartupFailureException("Unable to start hushd daemon");
                     } else {
@@ -117,7 +117,6 @@ class StartupProgressDialog extends JFrame {
             if (code == null || (code.asInt() != STARTUP_ERROR_CODE)) {
                 break;
             }
-
             final String message = daemonInfo.getString("message", "");
             setProgressText(message);
         } while (true);
@@ -142,15 +141,15 @@ class StartupProgressDialog extends JFrame {
             System.out.println("Stopping hushd");
 
             try {
-                clientCaller.stopDaemon();
-                long start = System.currentTimeMillis();
+                cliBridge.stopDaemon();
+                final long start = System.currentTimeMillis();
 
                 while (!daemonProcess.waitFor(3000, TimeUnit.MILLISECONDS)) {
-                    long end = System.currentTimeMillis();
+                    final long end = System.currentTimeMillis();
                     System.out.println("Waiting for " + ((end - start) / 1000) + " seconds for hushd to exit...");
 
                     if (end - start > 10 * 1000) {
-                        clientCaller.stopDaemon();
+                        cliBridge.stopDaemon();
                         daemonProcess.destroy();
                     }
                     if (end - start > 60 * 1000) {
@@ -183,18 +182,17 @@ class StartupProgressDialog extends JFrame {
         SwingUtilities.invokeLater(() -> progressLabel.setText(text));
     }
 
+    // BRX-TODO: Remove me, why can't I make `hush.conf` the way other platforms do?
     private void performWinBundleLaunch() throws IOException, InterruptedException {
         System.out.println("performing Win Bundle-specific launch");
-        String programFiles = System.getenv("PROGRAMFILES");
-        File pf = new File(programFiles);
-        File bundlePath = new File(pf, "hush/app");
-        bundlePath = bundlePath.getCanonicalFile();
+        final File programFiles = new File(System.getenv("PROGRAMFILES"));
+        final File bundlePath = new File(programFiles, "hush/app").getCanonicalFile();
 
         // run "first-run.bat"
-        File firstRun = new File(bundlePath, "first-run.bat");
+        final File firstRun = new File(bundlePath, "first-run.bat");
         if (firstRun.exists()) {
             System.out.println("running script " + firstRun.getCanonicalPath());
-            Process firstRunProcess = Runtime.getRuntime().exec(firstRun.getCanonicalPath());
+            final Process firstRunProcess = Runtime.getRuntime().exec(firstRun.getCanonicalPath());
             firstRunProcess.waitFor();
         }
     }

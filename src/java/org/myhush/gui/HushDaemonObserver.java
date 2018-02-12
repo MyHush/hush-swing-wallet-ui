@@ -15,120 +15,138 @@ import java.util.StringTokenizer;
  * Observes the daemon - running etc.
  */
 public class HushDaemonObserver {
-    HushDaemonObserver(String installDir)
-            throws IOException {
+    HushDaemonObserver(final String installDirPath) throws IOException {
         // Detect daemon and client tools installation
-        File dir = new File(installDir);
+        final File installDir = new File(installDirPath);
 
-        if (!dir.exists() || dir.isFile()) {
+        if (!installDir.exists() || installDir.isFile()) {
             throw new InstallationDetectionException(
-                    "The HUSH installation directory " + installDir + " does not exist or is not " +
-                            "a directory or is otherwise inaccessible to the wallet!");
+                "The HUSH installation directory " + installDirPath + " does not exist or is not " +
+                "a directory or is otherwise inaccessible to the wallet!"
+            );
         }
 
-        File hushd = new File(dir, OSUtil.getHushd());
-        File hushcli = new File(dir, OSUtil.getHushCli());
-
-        if ((!hushd.exists()) || (!hushcli.exists())) {
+        // BRX-TODO: Same note as in HushCommandLineBridge
+        // BRX_TODO: Also, why is this done in two different places?
+        File hushd = new File(installDir, OSUtil.getHushd());
+        if (!hushd.exists()) {
             hushd = OSUtil.findHushCommand(OSUtil.getHushd());
+        }
+        File hushcli = new File(installDir, OSUtil.getHushCli());
+        if (!hushcli.exists()) {
             hushcli = OSUtil.findHushCommand(OSUtil.getHushCli());
         }
 
-        System.out.println("Using HUSH utilities: " +
-                                   "hushd: " + ((hushd != null) ? hushd.getCanonicalPath() : "<MISSING>") + ", " +
-                                   "hush-cli: " + ((hushcli != null) ? hushcli.getCanonicalPath() : "<MISSING>"));
-
-        if ((hushd == null) || (hushcli == null) || (!hushd.exists()) || (!hushcli.exists())) {
+        if ((hushd == null) || !hushd.exists() || (hushcli == null) || !hushcli.exists()) {
             throw new InstallationDetectionException(
-                    "The HUSH GUI Wallet installation directory " + installDir + " needs\nto contain " +
-                            "the command line utilities hushd and hush-cli. At least one of them is missing! \n" +
-                            "Please place files HUSHSwingWalletUI.jar, " + OSUtil.getHushCli() + ", " +
-                            OSUtil.getHushd() + " in the same directory.");
+                "The HUSH GUI Wallet installation directory " + installDirPath + " needs\n" +
+                "to contain the command line utilities hushd and hush-cli. At least one of them is missing!\n" +
+                "Please place files HUSHSwingWalletUI.jar, " + OSUtil.getHushCli() + ", " + OSUtil.getHushd() + "\n" +
+                "in the same directory."
+            );
         }
+
+        System.out.println(
+            "Using HUSH utilities: hushd: " + hushd.getCanonicalPath() + ", " + "hush-cli: " + hushcli.getCanonicalPath()
+        );
     }
 
-    public synchronized DaemonInfo getDaemonInfo()
-            throws IOException, InterruptedException {
-        OSUtil.OS_TYPE os = OSUtil.getOSType();
-
-        if (os == OSUtil.OS_TYPE.WINDOWS) {
+    public synchronized DaemonInfo getDaemonInfo() throws IOException, InterruptedException {
+        if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
             return getDaemonInfoForWindowsOS();
         } else {
             return getDaemonInfoForUNIXLikeOS();
         }
     }
 
-    // So far tested on Mac OS X and Linux - expected to work on other UNIXes as well
-    private synchronized DaemonInfo getDaemonInfoForUNIXLikeOS()
-            throws IOException, InterruptedException {
-        DaemonInfo info = new DaemonInfo();
-        info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
+    // BRX-TODO: OS-specific logic needs to be abstracted
+    private class NixProcessStatus {
+        double cpuPercentage;
+        double virtualSizeMB;
+        double residentSizeMB;
+        String command;
+    }
 
-        CommandExecutor exec = new CommandExecutor(new String[]{ "ps", "auxwww" });
-        LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
+    private NixProcessStatus getProcessStatus(final String processStatusRow) {
+        final StringTokenizer stringTokenizer = new StringTokenizer(processStatusRow, " \t", false);
+        final NixProcessStatus processStatus = new NixProcessStatus();
 
-        String line;
-        while ((line = lnr.readLine()) != null) {
-            StringTokenizer st = new StringTokenizer(line, " \t", false);
-            boolean foundHush = false;
-            label:
-            for (int i = 0; i < 11; i++) {
-                final String token;
-                if (st.hasMoreTokens()) {
-                    token = st.nextToken();
-                } else {
-                    break;
-                }
-
-                switch (i) {
-                    case 2:
-                        try {
-                            info.cpuPercentage = Double.valueOf(token);
-                        } catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
-                        break;
-                    case 4:
-                        try {
-                            info.virtualSizeMB = Double.valueOf(token) / 1000;
-                        } catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
-                        break;
-                    case 5:
-                        try {
-                            info.residentSizeMB = Double.valueOf(token) / 1000;
-                        } catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ }
-                        break;
-                    case 10:
-                        if ((token.equals("hushd")) || (token.endsWith("/hushd"))) {
-                            info.status = DAEMON_STATUS.RUNNING;
-                            foundHush = true;
-                            break label;
-                        }
-                        break;
-                }
-            }
-
-            if (foundHush) {
+        for (int col = 0; col < 11; col++) {
+            final String token;
+            if (stringTokenizer.hasMoreTokens()) {
+                token = stringTokenizer.nextToken();
+            } else {
                 break;
             }
+            switch (col) {
+                case 2:
+                    try {
+                        processStatus.cpuPercentage = Double.valueOf(token);
+                    } catch (final NumberFormatException e) { /* TODO: Log or handle exception */ }
+                    break;
+                case 4:
+                    try {
+                        processStatus.virtualSizeMB = Double.valueOf(token) / 1000;
+                    } catch (final NumberFormatException e) { /* TODO: Log or handle exception */ }
+                    break;
+                case 5:
+                    try {
+                        processStatus.residentSizeMB = Double.valueOf(token) / 1000;
+                    } catch (final NumberFormatException e) { /* TODO: Log or handle exception */ }
+                    break;
+                case 10:
+                    processStatus.command = token;
+                    break;
+            }
         }
+        return processStatus;
+    }
+
+    // So far tested on Mac OS X and Linux - expected to work on other UNIXes as well
+    private synchronized DaemonInfo getDaemonInfoForUNIXLikeOS() throws IOException, InterruptedException {
+        final DaemonInfo info = new DaemonInfo();
+        info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
+
+        final String psAuxResult = new CommandExecutor(new String[]{ "ps", "auxwww" }).execute();
+        // BRX-TODO: Noted `LineNumberReader` used here and elsewhere, but not referring to any line numbers...
+        final LineNumberReader lnr = new LineNumberReader(new StringReader(psAuxResult));
+
+        do {
+            final String line = lnr.readLine();
+            if (line == null) {
+                break;
+            }
+            final NixProcessStatus processStatus = getProcessStatus(line);
+
+            if (processStatus.command.equals("hushd") || processStatus.command.endsWith("/hushd")) {
+                info.cpuPercentage = processStatus.cpuPercentage;
+                info.residentSizeMB = processStatus.residentSizeMB;
+                info.virtualSizeMB = processStatus.virtualSizeMB;
+                info.status = DAEMON_STATUS.RUNNING;
+                break;
+            }
+        } while (true);
 
         if (info.status != DAEMON_STATUS.RUNNING) {
             info.cpuPercentage = 0;
             info.residentSizeMB = 0;
             info.virtualSizeMB = 0;
         }
-
         return info;
     }
 
-    private synchronized DaemonInfo getDaemonInfoForWindowsOS()
-            throws IOException, InterruptedException {
-        DaemonInfo info = new DaemonInfo();
+
+    // BRX-TODO: Switch to `tasklist /fo csv /nh` instead of just `tasklist` for CSV output
+    // BRX-TODO: ^ https://stackoverflow.com/a/47987808
+    private synchronized DaemonInfo getDaemonInfoForWindowsOS() throws IOException, InterruptedException {
+        final DaemonInfo info = new DaemonInfo();
         info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
         info.cpuPercentage = 0;
         info.virtualSizeMB = 0;
 
-        CommandExecutor exec = new CommandExecutor(new String[]{ "tasklist" });
-        LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
+        final String tasklist = new CommandExecutor(new String[]{ "tasklist" }).execute();
+        // BRX-TODO: Same comment here re. LineNumberReader as above
+        final LineNumberReader lnr = new LineNumberReader(new StringReader(tasklist));
 
         String line;
         while ((line = lnr.readLine()) != null) {
@@ -173,10 +191,8 @@ public class HushDaemonObserver {
             info.residentSizeMB = 0;
             info.virtualSizeMB = 0;
         }
-
         return info;
     }
-
 
     public enum DAEMON_STATUS {
         RUNNING,
@@ -191,8 +207,7 @@ public class HushDaemonObserver {
         public double cpuPercentage;
     }
 
-    public static class InstallationDetectionException
-            extends IOException {
+    class InstallationDetectionException extends IOException {
         InstallationDetectionException(String message) {
             super(message);
         }

@@ -19,47 +19,27 @@ class PresentationPanel extends JPanel {
     private static final Color colorHigh = new Color(225, 225, 230);
     private static final Stroke edgeStroke = new BasicStroke(1);
 
-
     PresentationPanel() {
         this.setLayout(new FlowLayout(FlowLayout.LEFT, 6, 6));
     }
 
-
-    public void paintComponent(Graphics graphics) {
-        int h = getHeight();
-        int w = getWidth();
-
-        if (h < GRADIENT_EXTENT + 1) {
+    public void paintComponent(final Graphics graphics) {
+        if (getHeight() < GRADIENT_EXTENT + 1) {
             super.paintComponent(graphics);
             return;
         }
+        final float percentageOfGradient = Math.min(0.49f, (float) GRADIENT_EXTENT / getHeight());
 
-        float percentageOfGradient = (float) GRADIENT_EXTENT / h;
-
-        if (percentageOfGradient > 0.49f) {
-            percentageOfGradient = 0.49f;
-        }
-
-        Graphics2D graphics2D = (Graphics2D) graphics;
-
-        float fractions[] = new float[]
-                                    {
-                                            0, percentageOfGradient, 1 - percentageOfGradient, 1f
-                                    };
-
-        Color colors[] = new Color[]
-                                 {
-                                         colorLow, colorHigh, colorHigh, colorLow
-                                 };
-
-        LinearGradientPaint paint = new LinearGradientPaint(0, 0, 0, h - 1, fractions, colors);
+        final Graphics2D graphics2D = (Graphics2D) graphics;
+        final float fractions[] = new float[]{ 0, percentageOfGradient, 1 - percentageOfGradient, 1f };
+        final Color colors[] = new Color[]{ colorLow, colorHigh, colorHigh, colorLow };
+        final LinearGradientPaint linearGradientPaint = new LinearGradientPaint(0, 0, 0, getHeight() - 1, fractions, colors);
 
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        graphics2D.setPaint(paint);
-        graphics2D.fillRoundRect(0, 0, w - 1, h - 1, GRADIENT_EXTENT, GRADIENT_EXTENT);
+        graphics2D.setPaint(linearGradientPaint);
+        graphics2D.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, GRADIENT_EXTENT, GRADIENT_EXTENT);
         graphics2D.setColor(colorBorder);
         graphics2D.setStroke(edgeStroke);
-        graphics2D.drawRoundRect(0, 0, w - 1, h - 1, GRADIENT_EXTENT, GRADIENT_EXTENT);
+        graphics2D.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, GRADIENT_EXTENT, GRADIENT_EXTENT);
     }
-
 }

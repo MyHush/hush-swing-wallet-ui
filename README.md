@@ -93,7 +93,7 @@ At the present time this project is non-commercial in nature and developed by vo
 Wallet useful, please consider making a donation for its further development. Your contribution matters! Donations 
 are accepted at HUSH T address:
 ```
-t1UDhNq2aEqvxEbPzcRM8n2QJV8YJ664rXJ
+t1Npak5Tdb7CZpWS6dzokCPv8ugy7LanJ9g
 ```
 
 

@@ -25,8 +25,8 @@ class ProvingKeyFetcher {
     private static final String pathURL = "https://zcash.dl.mercerweiss.com/sprout-proving.key";
     // TODO: add backups
 
-    private static void copy(InputStream is, OutputStream os) throws IOException {
-        byte[] buf = new byte[0x1 << 13];
+    private static void copy(final InputStream is, final OutputStream os) throws IOException {
+        final byte[] buf = new byte[0x1 << 13];
         int read;
         while ((read = is.read(buf)) > -0) {
             os.write(buf, 0, read);
@@ -34,40 +34,39 @@ class ProvingKeyFetcher {
         os.flush();
     }
 
-    private static boolean checkSHA256(File provingKey, Component parent) throws IOException {
-        MessageDigest sha256;
+    private static boolean checkSHA256(final File provingKey, final Component parent) throws IOException {
+        final MessageDigest sha256;
         try {
             sha256 = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException impossible) {
             throw new RuntimeException(impossible);
         }
-        try (InputStream is = new BufferedInputStream(new FileInputStream(provingKey))) {
-            ProgressMonitorInputStream pmis = new ProgressMonitorInputStream(parent, "Verifying proving key", is);
+        try (final InputStream is = new BufferedInputStream(new FileInputStream(provingKey))) {
+            final ProgressMonitorInputStream pmis = new ProgressMonitorInputStream(parent, "Verifying proving key", is);
             pmis.getProgressMonitor().setMaximum(PROVING_KEY_SIZE);
             pmis.getProgressMonitor().setMillisToPopup(10);
-            DigestInputStream dis = new DigestInputStream(pmis, sha256);
-            byte[] temp = new byte[0x1 << 13];
+            final DigestInputStream dis = new DigestInputStream(pmis, sha256);
+            final byte[] temp = new byte[0x1 << 13];
             while (dis.read(temp) >= 0) {
                 /* do the thing */
             }
-            byte[] digest = sha256.digest();
+            final byte[] digest = sha256.digest();
             return SHA256.equalsIgnoreCase(DatatypeConverter.printHexBinary(digest));
         }
     }
 
-    public void fetchIfMissing(StartupProgressDialog parent) throws IOException {
+    public void fetchIfMissing(final StartupProgressDialog parent) throws IOException {
         try {
             verifyOrFetch(parent);
-        } catch (InterruptedIOException iox) {
+        } catch (final InterruptedIOException iox) {
             JOptionPane.showMessageDialog(parent, "HUSH cannot proceed without a proving key.");
             System.exit(-3);
         }
     }
 
     // BRX-TODO: Automatically move ZcashParams over to HushParams if it exists
-    private void verifyOrFetch(StartupProgressDialog parent) throws IOException {
-        File zCashParams = new File(System.getenv("APPDATA") + "/ZcashParams");
-        zCashParams = zCashParams.getCanonicalFile();
+    private void verifyOrFetch(final StartupProgressDialog parent) throws IOException {
+        final File zCashParams = new File(System.getenv("APPDATA") + "/ZcashParams").getCanonicalFile();
 
         boolean needsFetch = false;
         if (!zCashParams.exists()) {
@@ -76,15 +75,15 @@ class ProvingKeyFetcher {
         }
 
         // verifying key is small, always copy it
-        File verifyingKeyFile = new File(zCashParams, "sprout-verifying.key");
-        FileOutputStream fos = new FileOutputStream(verifyingKeyFile);
-        InputStream is = ProvingKeyFetcher.class.getClassLoader().getResourceAsStream("keys/sprout-verifying.key");
-        copy(is, fos);
-        fos.close();
-        is = null;
+        final File verifyingKeyFile = new File(zCashParams, "sprout-verifying.key");
+        final FileOutputStream fos = new FileOutputStream(verifyingKeyFile);
+        {
+            final InputStream is = ProvingKeyFetcher.class.getClassLoader().getResourceAsStream("keys/sprout-verifying.key");
+            copy(is, fos);
+            fos.close();
+        }
 
-        File provingKeyFile = new File(zCashParams, "sprout-proving.key");
-        provingKeyFile = provingKeyFile.getCanonicalFile();
+        final File provingKeyFile = new File(zCashParams, "sprout-proving.key").getCanonicalFile();
         if (!provingKeyFile.exists()) {
             needsFetch = true;
         } else if (provingKeyFile.length() != PROVING_KEY_SIZE) {
@@ -93,8 +92,7 @@ class ProvingKeyFetcher {
         /*
          * We skip proving key verification every start - this is impractical.
          * If the proving key exists and is the correct size, then it should be OK.
-        else
-        {
+        else {
             parent.setProgressText("Verifying proving key...");
             needsFetch = !checkSHA256(provingKeyFile,parent);
         }*/
@@ -102,19 +100,20 @@ class ProvingKeyFetcher {
         if (!needsFetch) {
             return;
         }
-
         JOptionPane.showMessageDialog(
                 parent,
                 "The wallet needs to download the Z cryptographic proving key (approx. 900 MB).\n" +
-                        "This will be done only once. Please be patient... Press OK to continue");
-
+                "This will be done only once. Please be patient... Press OK to continue"
+        );
         parent.setProgressText("Downloading proving key...");
         provingKeyFile.delete();
-        OutputStream os = new BufferedOutputStream(new FileOutputStream(provingKeyFile));
-        URL keyURL = new URL(pathURL);
+
+        final OutputStream os = new BufferedOutputStream(new FileOutputStream(provingKeyFile));
+        final URL keyURL = new URL(pathURL);
+        InputStream is = null;
         try {
             is = keyURL.openStream();
-            ProgressMonitorInputStream pmis = new ProgressMonitorInputStream(parent, "Downloading proving key", is);
+            final ProgressMonitorInputStream pmis = new ProgressMonitorInputStream(parent, "Downloading proving key", is);
             pmis.getProgressMonitor().setMaximum(PROVING_KEY_SIZE);
             pmis.getProgressMonitor().setMillisToPopup(10);
 
@@ -125,8 +124,7 @@ class ProvingKeyFetcher {
                 if (is != null) {
                     is.close();
                 }
-            } catch (IOException ignore) {
-            }
+            } catch (final IOException ignore) {}
         }
         parent.setProgressText("Verifying downloaded proving key...");
         if (!checkSHA256(provingKeyFile, parent)) {

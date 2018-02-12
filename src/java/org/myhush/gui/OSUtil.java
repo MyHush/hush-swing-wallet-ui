@@ -9,25 +9,42 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
+// BRX-TODO: This needs to be abstracted up an include a lot more platform-specific logic
+
 /**
  * Utilities - may be OS dependent
  */
 public class OSUtil {
 
-    private static boolean isUnixLike(OS_TYPE os) {
-        return os == OS_TYPE.LINUX || os == OS_TYPE.MAC_OS || os == OS_TYPE.FREE_BSD ||
-                       os == OS_TYPE.OTHER_BSD || os == OS_TYPE.SOLARIS || os == OS_TYPE.AIX ||
-                       os == OS_TYPE.OTHER_UNIX;
+    private static boolean isUnixLike(final OS_TYPE os) {
+        switch (os) {
+            case LINUX:
+            case MAC_OS:
+            case FREE_BSD:
+            case OTHER_BSD:
+            case SOLARIS:
+            case AIX:
+            case OTHER_UNIX:
+                return true;
+        }
+        return false;
     }
 
-    public static boolean isHardUnix(OS_TYPE os) {
-        return os == OS_TYPE.FREE_BSD ||
-                       os == OS_TYPE.OTHER_BSD || os == OS_TYPE.SOLARIS ||
-                       os == OS_TYPE.AIX || os == OS_TYPE.OTHER_UNIX;
+    public static boolean isHardUnix(final OS_TYPE os) {
+        switch (os) {
+            case FREE_BSD:
+            case OTHER_BSD:
+            case SOLARIS:
+            case AIX:
+            case OTHER_UNIX:
+                return true;
+        }
+        return false;
     }
 
+    // BRX-TODO: This is called _a lot_, cache result?
     public static OS_TYPE getOSType() {
-        String name = System.getProperty("os.name").toLowerCase(Locale.ROOT);
+        final String name = System.getProperty("os.name").toLowerCase(Locale.ROOT);
 
         if (name.contains("linux")) {
             return OS_TYPE.LINUX;
@@ -57,26 +74,17 @@ public class OSUtil {
 
     // Returns the name of the hush-cli tool - may vary depending on the OS.
     public static String getHushCli() {
-        String hushcli = "hush-cli";
-
-        OS_TYPE os = getOSType();
-        if (os == OS_TYPE.WINDOWS) {
-            hushcli += ".exe";
-        }
-
-        return hushcli;
+        return "hush-cli" + ((getOSType() == OS_TYPE.WINDOWS) ? ".exe" : "");
     }
 
     // Returns the directory that the wallet program was started from
-    public static String getProgramDirectory()
-            throws IOException {
+    public static String getProgramDirectory() throws IOException {
         // TODO: this way of finding the dir is JAR name dependent - tricky, may not work
         // if program is repackaged as different JAR!
         final String JAR_NAME = "HUSHSwingWalletUI.jar";
-        String cp = System.getProperty("java.class.path");
-        if ((cp != null) && (!cp.contains(File.pathSeparator)) &&
-                    (cp.endsWith(JAR_NAME))) {
-            File pd = new File(cp.substring(0, cp.length() - JAR_NAME.length()));
+        final String classPath = System.getProperty("java.class.path");
+        if ((classPath != null) && !classPath.contains(File.pathSeparator) && classPath.endsWith(JAR_NAME)) {
+            final File pd = new File(classPath.substring(0, classPath.length() - JAR_NAME.length()));
 
             if (pd.exists() && pd.isDirectory()) {
                 return pd.getCanonicalPath();
@@ -84,9 +92,9 @@ public class OSUtil {
         }
 
         // Current dir of the running JVM (expected)
-        String userDir = System.getProperty("user.dir");
+        final String userDir = System.getProperty("user.dir");
         if (userDir != null) {
-            File ud = new File(userDir);
+            final File ud = new File(userDir);
 
             if (ud.exists() && ud.isDirectory()) {
                 return ud.getCanonicalPath();
@@ -94,7 +102,6 @@ public class OSUtil {
         }
 
         // TODO: tests and more options
-
         return new File(".").getCanonicalPath();
     }
 
@@ -102,11 +109,8 @@ public class OSUtil {
         return new File(System.getProperty("user.home"));
     }
 
-    public static String getBlockchainDirectory()
-            throws IOException {
-        OS_TYPE os = getOSType();
-
-        switch (os) {
+    public static String getBlockchainDirectory() throws IOException {
+        switch (getOSType()) {
             case MAC_OS:
                 return new File(System.getProperty("user.home") + "/Library/Application Support/Hush").getCanonicalPath();
             case WINDOWS:
@@ -117,57 +121,47 @@ public class OSUtil {
     }
 
     // Directory with program settings to store
-    public static String getSettingsDirectory()
-            throws IOException {
-        File userHome = new File(System.getProperty("user.home"));
-        File dir;
-        OS_TYPE os = getOSType();
+    public static String getSettingsDirectory() throws IOException {
+        final File userHome = new File(System.getProperty("user.home"));
+        final File settingsDir;
 
-        switch (os) {
+        switch (getOSType()) {
             case MAC_OS:
-                dir = new File(userHome, "Library/Application Support/HUSHSwingWalletUI");
+                settingsDir = new File(userHome, "Library/Application Support/HUSHSwingWalletUI");
                 break;
             case WINDOWS:
-                dir = new File(System.getenv("LOCALAPPDATA") + "\\HUSHSwingWalletUI");
+                settingsDir = new File(System.getenv("LOCALAPPDATA") + "\\HUSHSwingWalletUI");
                 break;
             default:
-                dir = new File(userHome.getCanonicalPath() + File.separator + ".HUSHSwingWalletUI");
+                settingsDir = new File(userHome.getCanonicalPath() + File.separator + ".HUSHSwingWalletUI");
                 break;
         }
 
-        if (!dir.exists()) {
-            if (!dir.mkdirs()) {
-                System.out.println("WARNING: Could not create settings directory: " + dir.getCanonicalPath());
+        if (!settingsDir.exists()) {
+            if (!settingsDir.mkdirs()) {
+                System.out.println("WARNING: Could not create settings directory: " + settingsDir.getCanonicalPath());
             }
         }
-
-        return dir.getCanonicalPath();
+        return settingsDir.getCanonicalPath();
     }
 
-    public static String getSystemInfo()
-            throws IOException, InterruptedException {
-        OS_TYPE os = getOSType();
-
-        switch (os) {
-            case MAC_OS: {
-                CommandExecutor uname = new CommandExecutor(new String[]{ "uname", "-sr" });
-                return uname.execute() + "; " +
-                               System.getProperty("os.name") + " " + System.getProperty("os.version");
-            }
+    public static String getSystemInfo() throws IOException, InterruptedException {
+        switch (getOSType()) {
+            case MAC_OS:
+                final CommandExecutor uname = new CommandExecutor(new String[]{ "uname", "-sr" });
+                return uname.execute() + "; " + System.getProperty("os.name") + " " + System.getProperty("os.version");
             case WINDOWS:
                 // TODO: More detailed Windows information
                 return System.getProperty("os.name");
-            default: {
-                CommandExecutor uname = new CommandExecutor(new String[]{ "uname", "-srv" });
-                return uname.execute();
-            }
+            default:
+                return new CommandExecutor(new String[]{ "uname", "-srv" }).execute();
         }
     }
 
     // Can be used to find hushd/hush-cli if it is not found in the same place as the wallet JAR
     // Null if not found
-    public static File findHushCommand(String command)
-            throws IOException {
+    // BRX-TODO: This method is a nightmare, revisit ASAP
+    public static File findHushCommand(String command) throws IOException {
         File f;
 
         // Try with system property hush.location.dir - may be specified by caller
@@ -231,7 +225,6 @@ public class OSUtil {
 
         return null;
     }
-
 
     public enum OS_TYPE {
         LINUX, WINDOWS, MAC_OS, FREE_BSD, OTHER_BSD, SOLARIS, AIX, OTHER_UNIX, OTHER_OS

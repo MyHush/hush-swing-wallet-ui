@@ -12,37 +12,37 @@ import javax.swing.*;
  */
 class StatusUpdateErrorReporter {
     private final JFrame parent;
-    private long lastReportedErrroTime = 0;
+    private long lastReportedErrorTime = 0;
 
-    StatusUpdateErrorReporter(JFrame parent) {
+    StatusUpdateErrorReporter(final JFrame parent) {
         this.parent = parent;
     }
 
-    public void reportError(Exception e) {
+    public void reportError(final Exception e) {
         reportError(e, true);
     }
 
-    public void reportError(Exception e, boolean isDueToAutomaticUpdate) {
+    public void reportError(final Exception e, final boolean isDueToAutomaticUpdate) {
         e.printStackTrace();
 
         // TODO: Error logging
-        long time = System.currentTimeMillis();
+        final long time = System.currentTimeMillis();
 
         // TODO: More complex filtering/tracking in the future
-        if (isDueToAutomaticUpdate && (time - lastReportedErrroTime) < (45 * 1000)) {
+        if (isDueToAutomaticUpdate && (time - lastReportedErrorTime) < (45 * 1000)) {
             return;
         }
 
         if (isDueToAutomaticUpdate) {
-            lastReportedErrroTime = time;
+            lastReportedErrorTime = time;
         }
 
         JOptionPane.showMessageDialog(
                 parent,
                 "An unexpected error occurred when updating the GUI wallet\n" +
-                        "state. Please ensure that the HUSH daemon is running. \n" +
-                        "\n" +
-                        e.getMessage(),
-                "Error in updating status.", JOptionPane.ERROR_MESSAGE);
+                "state. Please ensure that the HUSH daemon is running.\n\n" + e.getMessage(),
+                "Error in updating status.",
+                JOptionPane.ERROR_MESSAGE
+        );
     }
 }

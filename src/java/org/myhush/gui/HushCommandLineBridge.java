@@ -9,20 +9,23 @@ import com.eclipsesource.json.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.StringReader;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 public class HushCommandLineBridge {
+    // BRX-TODO: Can be finalized by using Files.exists() below in constructor in place of `new File(...).exists()`
     private File hushcli;
     private File hushd;
 
-    public HushCommandLineBridge(String installDir)
-            throws IOException {
+    public HushCommandLineBridge(final String installDirPath) throws IOException {
         // Detect daemon and client tools installation
-        File dir = new File(installDir);
-        hushcli = new File(dir, OSUtil.getHushCli());
+        final File installDir = new File(installDirPath);
+        hushcli = new File(installDir, OSUtil.getHushCli());
 
         if (!hushcli.exists()) {
             hushcli = OSUtil.findHushCommand(OSUtil.getHushCli());
@@ -30,11 +33,11 @@ public class HushCommandLineBridge {
 
         if ((hushcli == null) || (!hushcli.exists())) {
             throw new IOException(
-                    "The Hush installation directory " + installDir + " needs to contain " +
+                    "The Hush installation directory " + installDirPath + " needs to contain " +
                             "the command line utilities hushd and hush-cli. hush-cli is missing!");
         }
 
-        hushd = new File(dir, OSUtil.getHushd());
+        hushd = new File(installDir, OSUtil.getHushd());
         if (!hushd.exists()) {
             hushd = OSUtil.findHushCommand(OSUtil.getHushd());
         }
@@ -46,91 +49,79 @@ public class HushCommandLineBridge {
         }
     }
 
-    public synchronized Process startDaemon()
-            throws IOException {
-        String exportDir = OSUtil.getUserHomeDirectory().getCanonicalPath();
-
-        CommandExecutor starter = new CommandExecutor(
-                new String[]
-                        {
-                                hushd.getCanonicalPath(),
-                                "-exportdir=" + exportDir
-                        });
-
-        return starter.startChildProcess();
+    public synchronized Process startDaemon() throws IOException {
+        final String exportDir = OSUtil.getUserHomeDirectory().getCanonicalPath();
+        final String[] args = new String[]{ hushd.getCanonicalPath(), "-exportdir=" + exportDir };
+        return new CommandExecutor(args).startChildProcess();
     }
 
-    public /*synchronized*/ void stopDaemon()
-            throws IOException, InterruptedException {
-        CommandExecutor stopper = new CommandExecutor(
-                new String[]{ hushcli.getCanonicalPath(), "stop" });
-
-        String result = stopper.execute();
+    public /*synchronized*/ void stopDaemon() throws IOException, InterruptedException {
+        final String result = new CommandExecutor(new String[]{ hushcli.getCanonicalPath(), "stop" }).execute();
         System.out.println("Stop command issued: " + result);
     }
 
     public synchronized JsonObject getDaemonRawRuntimeInfo()
             throws IOException, InterruptedException, DaemonUnavailableException {
-        CommandExecutor infoGetter = new CommandExecutor(
-                new String[]{ hushcli.getCanonicalPath(), "getinfo" });
-        String info = infoGetter.execute();
+        final String info = new CommandExecutor(new String[]{ hushcli.getCanonicalPath(), "getinfo" }).execute();
 
         if (info.trim().toLowerCase(Locale.ROOT).startsWith("error: couldn't connect to server")) {
             throw new DaemonUnavailableException(info.trim());
         }
 
         if (info.trim().toLowerCase(Locale.ROOT).startsWith("error: ")) {
-            info = info.substring(7);
+            final String errorInfo = info.substring(7);
 
             try {
-                return Json.parse(info).asObject();
-            } catch (ParseException pe) {
-                System.out.println("unexpected daemon info: " + info);
-                throw new IOException(pe);
+                return Json.parse(errorInfo).asObject();
+            } catch (final ParseException e) {
+                System.out.println("unexpected daemon info: " + errorInfo);
+                throw new IOException(e);
             }
         } else if (info.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
-            return Util.getJsonErrorMessage(info);
+            return jsonifyErrorMessage(info);
         } else {
             try {
                 return Json.parse(info).asObject();
-            } catch (ParseException pe) {
+            } catch (final ParseException e) {
                 System.out.println("unexpected daemon info: " + info);
-                throw new IOException(pe);
+                throw new IOException(e);
             }
         }
     }
 
-    public synchronized WalletBalance getWalletInfo()
-            throws WalletCallException, IOException, InterruptedException {
-        WalletBalance balance = new WalletBalance();
+    public synchronized WalletBalance getWalletInfo() throws WalletCallException, IOException, InterruptedException {
+        final WalletBalance balance = new WalletBalance();
 
-        JsonObject objResponse = this.executeCommandAndGetJsonObject("z_gettotalbalance", null);
+        // call `hush-cli z_gettotalbalance [1]` to get confirmed balances (1 is default, included)
+        final JsonObject confirmedBalances = this.executeCommandAndGetJsonObject("z_gettotalbalance", null);
 
-        balance.transparentBalance = Double.valueOf(objResponse.getString("transparent", "-1"));
-        balance.privateBalance = Double.valueOf(objResponse.getString("private", "-1"));
-        balance.totalBalance = Double.valueOf(objResponse.getString("total", "-1"));
+        balance.transparentBalance = Double.valueOf(confirmedBalances.getString("transparent", "-1"));
+        balance.privateBalance = Double.valueOf(confirmedBalances.getString("private", "-1"));
+        balance.totalBalance = Double.valueOf(confirmedBalances.getString("total", "-1"));
 
-        objResponse = this.executeCommandAndGetJsonObject("z_gettotalbalance", "0");
+        // call `hush-cli z_gettotalbalance 0` to get balances with 0 or more confirmations, ie. all
+        final JsonObject totalBalances = this.executeCommandAndGetJsonObject("z_gettotalbalance", "0");
 
-        balance.transparentUnconfirmedBalance = Double.valueOf(objResponse.getString("transparent", "-1"));
-        balance.privateUnconfirmedBalance = Double.valueOf(objResponse.getString("private", "-1"));
-        balance.totalUnconfirmedBalance = Double.valueOf(objResponse.getString("total", "-1"));
+        balance.transparentUnconfirmedBalance = Double.valueOf(totalBalances.getString("transparent", "-1"));
+        balance.privateUnconfirmedBalance = Double.valueOf(totalBalances.getString("private", "-1"));
+        balance.totalUnconfirmedBalance = Double.valueOf(totalBalances.getString("total", "-1"));
 
         return balance;
     }
 
     public synchronized String[][] getWalletPublicTransactions()
             throws WalletCallException, IOException, InterruptedException {
-        String notListed = "\u26D4";
-
-        OSUtil.OS_TYPE os = OSUtil.getOSType();
-        if (os == OSUtil.OS_TYPE.WINDOWS) {
+        final String notListed;
+        if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
             notListed = " \u25B6";
+        } else {
+            notListed = "\u26D4";
         }
 
-        JsonArray jsonTransactions = executeCommandAndGetJsonArray(
-                "listtransactions", wrapStringParameter(""), "100");
-        String strTransactions[][] = new String[jsonTransactions.size()][];
+        final JsonArray jsonTransactions = executeCommandAndGetJsonArray(
+            "listtransactions", wrapStringParameter(""), "100"
+        );
+        final String strTransactions[][] = new String[jsonTransactions.size()][];
         for (int i = 0; i < jsonTransactions.size(); i++) {
             strTransactions[i] = new String[7];
             JsonObject trans = jsonTransactions.get(i).asObject();
@@ -144,35 +135,31 @@ public class HushCommandLineBridge {
             strTransactions[i][4] = trans.get("time").toString();
             strTransactions[i][5] = trans.getString("address", notListed + " (Z Address not listed by wallet!)");
             strTransactions[i][6] = trans.get("txid").toString();
-
         }
-
         return strTransactions;
     }
 
-    public synchronized String[] getWalletZAddresses()
-            throws WalletCallException, IOException, InterruptedException {
-        JsonArray jsonAddresses = executeCommandAndGetJsonArray("z_listaddresses", null);
-        String strAddresses[] = new String[jsonAddresses.size()];
+    public synchronized String[] getWalletZAddresses() throws WalletCallException, IOException, InterruptedException {
+        final JsonArray jsonAddresses = executeCommandAndGetJsonArray("z_listaddresses", null);
+        final String strAddresses[] = new String[jsonAddresses.size()];
         for (int i = 0; i < jsonAddresses.size(); i++) {
             strAddresses[i] = jsonAddresses.get(i).asString();
         }
-
         return strAddresses;
     }
 
     public synchronized String[][] getWalletZReceivedTransactions()
             throws WalletCallException, IOException, InterruptedException {
-        String[] zAddresses = this.getWalletZAddresses();
+        final String[] zAddresses = this.getWalletZAddresses();
+        final List<String[]> zReceivedTransactions = new ArrayList<>();
 
-        List<String[]> zReceivedTransactions = new ArrayList<>();
-
-        for (String zAddress : zAddresses) {
-            JsonArray jsonTransactions = executeCommandAndGetJsonArray(
-                    "z_listreceivedbyaddress", wrapStringParameter(zAddress), "0");
+        for (final String zAddress : zAddresses) {
+            final JsonArray jsonTransactions = executeCommandAndGetJsonArray(
+                "z_listreceivedbyaddress", wrapStringParameter(zAddress), "0"
+            );
             for (int i = 0; i < jsonTransactions.size(); i++) {
-                String[] currentTransaction = new String[7];
-                JsonObject trans = jsonTransactions.get(i).asObject();
+                final String[] currentTransaction = new String[7];
+                final JsonObject trans = jsonTransactions.get(i).asObject();
 
                 String txID = trans.getString("txid", "ERROR!");
                 // Needs to be the same as in getWalletPublicTransactions()
@@ -188,56 +175,53 @@ public class HushCommandLineBridge {
                 zReceivedTransactions.add(currentTransaction);
             }
         }
-
         return zReceivedTransactions.toArray(new String[0][]);
     }
 
     // ./src/hush-cli listunspent only returns T addresses it seems
     public synchronized String[] getWalletPublicAddressesWithUnspentOutputs()
             throws WalletCallException, IOException, InterruptedException {
-        JsonArray jsonUnspentOutputs = executeCommandAndGetJsonArray("listunspent", "0");
+        final JsonArray jsonUnspentOutputs = executeCommandAndGetJsonArray("listunspent", "0");
+        final Set<String> addresses = new HashSet<>();
 
-        Set<String> addresses = new HashSet<>();
         for (int i = 0; i < jsonUnspentOutputs.size(); i++) {
-            JsonObject outp = jsonUnspentOutputs.get(i).asObject();
+            final JsonObject outp = jsonUnspentOutputs.get(i).asObject();
             addresses.add(outp.getString("address", "ERROR!"));
         }
-
         return addresses.toArray(new String[0]);
     }
 
     // ./hush-cli listreceivedbyaddress 0 true
     public synchronized String[] getWalletAllPublicAddresses()
             throws WalletCallException, IOException, InterruptedException {
-        JsonArray jsonReceivedOutputs = executeCommandAndGetJsonArray("listreceivedbyaddress", "0", "true");
+        final JsonArray jsonReceivedOutputs = executeCommandAndGetJsonArray("listreceivedbyaddress", "0", "true");
+        final Set<String> addresses = new HashSet<>();
 
-        Set<String> addresses = new HashSet<>();
         for (int i = 0; i < jsonReceivedOutputs.size(); i++) {
-            JsonObject outp = jsonReceivedOutputs.get(i).asObject();
+            final JsonObject outp = jsonReceivedOutputs.get(i).asObject();
             addresses.add(outp.getString("address", "ERROR!"));
         }
-
         return addresses.toArray(new String[0]);
     }
 
-    public synchronized Map<String, String> getRawTransactionDetails(String txID)
+    public synchronized Map<String, String> getRawTransactionDetails(final String txID)
             throws WalletCallException, IOException, InterruptedException {
-        JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
-                "gettransaction", wrapStringParameter(txID));
+        final JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
+            "gettransaction", wrapStringParameter(txID)
+        );
+        final Map<String, String> map = new HashMap<>();
 
-        Map<String, String> map = new HashMap<>();
-
-        for (String name : jsonTransaction.names()) {
+        for (final String name : jsonTransaction.names()) {
             this.decomposeJSONValue(name, jsonTransaction.get(name), map);
         }
-
         return map;
     }
 
-    public synchronized String getMemoField(String acc, String txID)
+    public synchronized String getMemoField(final String acc, final String txID)
             throws WalletCallException, IOException, InterruptedException {
-        JsonArray jsonTransactions = this.executeCommandAndGetJsonArray(
-                "z_listreceivedbyaddress", wrapStringParameter(acc));
+        final JsonArray jsonTransactions = this.executeCommandAndGetJsonArray(
+            "z_listreceivedbyaddress", wrapStringParameter(acc)
+        );
 
         for (int i = 0; i < jsonTransactions.size(); i++) {
             if (jsonTransactions.get(i).asObject().getString("txid", "ERROR!").equals(txID)) {
@@ -245,56 +229,56 @@ public class HushCommandLineBridge {
                     return null;
                 }
 
-                String MemoHex = jsonTransactions.get(i).asObject().getString("memo", "ERROR!");
+                final String memoHex = jsonTransactions.get(i).asObject().getString("memo", "ERROR!");
                 // Skip empty memos
-                if (MemoHex.startsWith("f60000")) {
+                if (memoHex.startsWith("f60000")) {
                     return null;
                 }
 
-                StringBuilder MemoAscii = new StringBuilder("");
-                for (int j = 0; j < MemoHex.length(); j += 2) {
-                    String str = MemoHex.substring(j, j + 2);
-                    if (!str.equals("00")) // Zero bytes are empty
-                    {
-                        MemoAscii.append((char) Integer.parseInt(str, 16));
+                final StringBuilder memoAscii = new StringBuilder();
+                for (int j = 0; j < memoHex.length(); j += 2) {
+                    final String str = memoHex.substring(j, j + 2);
+                    if (!str.equals("00")) {// Zero bytes are empty
+                        memoAscii.append((char) Integer.parseInt(str, 16));
                     }
                 }
-                return MemoAscii.toString();
+                return memoAscii.toString();
             }
         }
-
         return null;
     }
 
-    public synchronized String getRawTransaction(String txID)
+    public synchronized String getRawTransaction(final String txID)
             throws WalletCallException, IOException, InterruptedException {
-        JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
-                "gettransaction", wrapStringParameter(txID));
-
+        final JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
+            "gettransaction", wrapStringParameter(txID)
+        );
         return jsonTransaction.toString(WriterConfig.PRETTY_PRINT);
     }
 
-    // return UNIX time as tring
-    private synchronized String getWalletTransactionTime(String txID)
+    // return UNIX time as String
+    private synchronized String getWalletTransactionTime(final String txID)
             throws WalletCallException, IOException, InterruptedException {
-        JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
-                "gettransaction", wrapStringParameter(txID));
-
+        final JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
+            "gettransaction", wrapStringParameter(txID)
+        );
         return String.valueOf(jsonTransaction.getLong("time", -1));
     }
 
     private synchronized String getWalletTransactionConfirmations(String txID)
             throws WalletCallException, IOException, InterruptedException {
-        JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
-                "gettransaction", wrapStringParameter(txID));
-
+        final JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
+            "gettransaction", wrapStringParameter(txID)
+        );
         return jsonTransaction.get("confirmations").toString();
     }
 
     // Checks if a certain T address is a watch-only address or is otherwise invalid.
     public synchronized boolean isWatchOnlyOrInvalidAddress(String address)
             throws WalletCallException, IOException, InterruptedException {
-        JsonObject response = this.executeCommandAndGetJsonValue("validateaddress", wrapStringParameter(address)).asObject();
+        final JsonObject response = this.executeCommandAndGetJsonValue(
+            "validateaddress", wrapStringParameter(address)
+        ).asObject();
 
         if (response.getBoolean("isvalid", false)) {
             return response.getBoolean("iswatchonly", true);
@@ -303,40 +287,45 @@ public class HushCommandLineBridge {
     }
 
     // Returns confirmed balance only!
-    public synchronized String getBalanceForAddress(String address)
+    public synchronized String getBalanceForAddress(final String address)
             throws WalletCallException, IOException, InterruptedException {
-        JsonValue response = this.executeCommandAndGetJsonValue("z_getbalance", wrapStringParameter(address));
-
+        final JsonValue response = this.executeCommandAndGetJsonValue(
+            "z_getbalance", wrapStringParameter(address)
+        );
         return String.valueOf(response.toString());
     }
 
-    public synchronized String getUnconfirmedBalanceForAddress(String address)
+    public synchronized String getUnconfirmedBalanceForAddress(final String address)
             throws WalletCallException, IOException, InterruptedException {
-        JsonValue response = this.executeCommandAndGetJsonValue("z_getbalance", wrapStringParameter(address), "0");
-
+        final JsonValue response = this.executeCommandAndGetJsonValue(
+            "z_getbalance", wrapStringParameter(address), "0"
+        );
         return String.valueOf(response.toString());
     }
 
-    public synchronized String createNewAddress(boolean isZAddress)
+    public synchronized String createNewAddress(final boolean isZAddress)
             throws WalletCallException, IOException, InterruptedException {
-        String strResponse = this.executeCommandAndGetSingleStringResponse((isZAddress ? "z_" : "") + "getnewaddress");
-
-        return strResponse.trim();
+        return this.executeCommandAndGetSingleStringResponse((isZAddress ? "z_" : "") + "getnewaddress").trim();
     }
 
     // Returns OPID
-    public synchronized String sendCash(String from, String to, String amount, String memo, String transactionFee)
-            throws WalletCallException, IOException, InterruptedException {
-        StringBuilder hexMemo = new StringBuilder();
-        for (byte c : memo.getBytes("UTF-8")) {
-            String hexChar = Integer.toHexString((int) c);
+    public synchronized String sendCash(
+        final String from,
+        final String to,
+        final String amount,
+        final String memo,
+        final String transactionFee
+    ) throws WalletCallException, IOException, InterruptedException {
+        final StringBuilder hexMemo = new StringBuilder();
+        for (final byte c : memo.getBytes(StandardCharsets.UTF_8)) {
+            final String hexChar = Integer.toHexString((int) c);
             if (hexChar.length() < 2) {
-                hexChar = "0" + hexChar;
+                hexMemo.append("0");
             }
             hexMemo.append(hexChar);
         }
 
-        JsonObject toArgument = new JsonObject();
+        final JsonObject toArgument = new JsonObject();
         toArgument.set("address", to);
         if (hexMemo.length() >= 2) {
             toArgument.set("memo", hexMemo.toString());
@@ -347,14 +336,14 @@ public class HushCommandLineBridge {
         // TODO: find a better/cleaner way to format the amount
         toArgument.set("amount", "\uFFFF\uFFFF\uFFFF\uFFFF\uFFFF");
 
-        JsonArray toMany = new JsonArray();
+        final JsonArray toMany = new JsonArray();
         toMany.add(toArgument);
 
-        String amountPattern = "\"amount\":\"\uFFFF\uFFFF\uFFFF\uFFFF\uFFFF\"";
+        final String amountPattern = "\"amount\":\"\uFFFF\uFFFF\uFFFF\uFFFF\uFFFF\"";
         // Make sure our replacement hack never leads to a mess up
-        String toManyBeforeReplace = toMany.toString();
-        int firstIndex = toManyBeforeReplace.indexOf(amountPattern);
-        int lastIndex = toManyBeforeReplace.lastIndexOf(amountPattern);
+        final String toManyBeforeReplace = toMany.toString();
+        final int firstIndex = toManyBeforeReplace.indexOf(amountPattern);
+        final int lastIndex = toManyBeforeReplace.lastIndexOf(amountPattern);
         if ((firstIndex == -1) || (firstIndex != lastIndex)) {
             throw new WalletCallException("Error in forming z_sendmany command: " + toManyBeforeReplace);
         }
@@ -362,76 +351,76 @@ public class HushCommandLineBridge {
         DecimalFormatSymbols decSymbols = new DecimalFormatSymbols(Locale.ROOT);
 
         // Properly format teh transaction fee as a number
-        if ((transactionFee == null) || (transactionFee.trim().length() <= 0)) {
-            transactionFee = "0.0001"; // Default value
+        final String preparedTxFee;
+        if ((transactionFee == null) || (transactionFee.trim().length() == 0)) {
+            preparedTxFee = "0.0001"; // Default value
         } else {
-            transactionFee = new DecimalFormat(
-                    "########0.00######", decSymbols).format(Double.valueOf(transactionFee));
+            preparedTxFee = new DecimalFormat("########0.00######", decSymbols).format(Double.valueOf(transactionFee));
         }
 
         // This replacement is a hack to make sure the JSON object amount has double format 0.00 etc.
         // TODO: find a better way to format the amount
-        String toManyArrayStr = toMany.toString().replace(
-                amountPattern,
-                "\"amount\":" + new DecimalFormat("########0.00######", decSymbols).format(Double.valueOf(amount)));
-
-        String[] sendCashParameters = new String[]
-                                              {
-                                                      this.hushcli.getCanonicalPath(), "z_sendmany", wrapStringParameter(from),
-                                                      wrapStringParameter(toManyArrayStr),
-                                                      // Default min confirmations for the input transactions is 1
-                                                      "1",
-                                                      // transaction fee
-                                                      transactionFee
-                                              };
+        final String toManyArrayStr = toMany.toString().replace(
+            amountPattern,
+            "\"amount\":" + new DecimalFormat("########0.00######", decSymbols).format(Double.valueOf(amount))
+        );
 
         // Safeguard to make sure the monetary amount does not differ after formatting
-        BigDecimal bdAmout = new BigDecimal(amount);
-        JsonArray toManyVerificationArr = Json.parse(toManyArrayStr).asArray();
-        BigDecimal bdFinalAmount =
-                new BigDecimal(toManyVerificationArr.get(0).asObject().getDouble("amount", -1));
-        BigDecimal difference = bdAmout.subtract(bdFinalAmount).abs();
+        final BigDecimal bdAmount = new BigDecimal(amount);
+        final JsonArray toManyVerificationArr = Json.parse(toManyArrayStr).asArray();
+        final BigDecimal bdFinalAmount = new BigDecimal(toManyVerificationArr.get(0).asObject().getDouble("amount", -1));
+        final BigDecimal difference = bdAmount.subtract(bdFinalAmount).abs();
         if (difference.compareTo(new BigDecimal("0.000000015")) >= 0) {
-            throw new WalletCallException("Error in forming z_sendmany command: Amount differs after formatting: " +
-                                                  amount + " | " + toManyArrayStr);
+            throw new WalletCallException(
+                "Error in forming z_sendmany command: Amount differs after formatting: " + amount + " | " + toManyArrayStr
+            );
         }
 
-        System.out.println("The following send command will be issued: " +
-                                   sendCashParameters[0] + " " + sendCashParameters[1] + " " +
-                                   sendCashParameters[2] + " " + sendCashParameters[3] + " " +
-                                   sendCashParameters[4] + " " + sendCashParameters[5] + ".");
+        final String[] sendCashParameters = new String[]{
+                this.hushcli.getCanonicalPath(),
+                "z_sendmany",
+                wrapStringParameter(from),
+                wrapStringParameter(toManyArrayStr),
+                "1",                                   // default min confirmations for the input transactions is 1
+                preparedTxFee                          // transaction fee
+        };
+
+        System.out.println(
+            "The following send command will be issued: " +
+            sendCashParameters[0] + " " + sendCashParameters[1] + " " +
+            sendCashParameters[2] + " " + sendCashParameters[3] + " " +
+            sendCashParameters[4] + " " + sendCashParameters[5] + "."
+        );
 
         // Create caller to send cash
-        CommandExecutor caller = new CommandExecutor(sendCashParameters);
-        String strResponse = caller.execute();
+        final String strResponse = new CommandExecutor(sendCashParameters).execute();
 
         if (strResponse.trim().toLowerCase(Locale.ROOT).startsWith("error:") ||
                     strResponse.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
             throw new WalletCallException("Error response from wallet: " + strResponse);
         }
 
-        System.out.println("Sending cash with the following command: " +
-                                   sendCashParameters[0] + " " + sendCashParameters[1] + " " +
-                                   sendCashParameters[2] + " " + sendCashParameters[3] + " " +
-                                   sendCashParameters[4] + " " + sendCashParameters[5] + "." +
-                                   " Got result: [" + strResponse + "]");
-
+        System.out.println(
+            "Sending cash with the following command: " +
+            sendCashParameters[0] + " " + sendCashParameters[1] + " " +
+            sendCashParameters[2] + " " + sendCashParameters[3] + " " +
+            sendCashParameters[4] + " " + sendCashParameters[5] + "." +
+            " Got result: [" + strResponse + "]"
+        );
         return strResponse.trim();
     }
 
-    public synchronized boolean isSendingOperationComplete(String opID)
+    public synchronized boolean isSendingOperationComplete(final String opID)
             throws WalletCallException, IOException, InterruptedException {
-        JsonArray response = this.executeCommandAndGetJsonArray(
-                "z_getoperationstatus", wrapStringParameter("[\"" + opID + "\"]"));
-        JsonObject jsonStatus = response.get(0).asObject();
-
-        String status = jsonStatus.getString("status", "ERROR");
+        final JsonArray response = this.executeCommandAndGetJsonArray(
+            "z_getoperationstatus", wrapStringParameter("[\"" + opID + "\"]")
+        );
+        final JsonObject jsonStatus = response.get(0).asObject();
+        final String status = jsonStatus.getString("status", "ERROR");
 
         System.out.println("Operation " + opID + " status is " + response + ".");
 
-        if (status.equalsIgnoreCase("success") ||
-                    status.equalsIgnoreCase("error") ||
-                    status.equalsIgnoreCase("failed")) {
+        if (status.equalsIgnoreCase("success") || status.equalsIgnoreCase("error") || status.equalsIgnoreCase("failed")) {
             return true;
         } else if (status.equalsIgnoreCase("executing") || status.equalsIgnoreCase("queued")) {
             return false;
@@ -440,13 +429,13 @@ public class HushCommandLineBridge {
         }
     }
 
-    public synchronized boolean isCompletedOperationSuccessful(String opID)
+    public synchronized boolean isCompletedOperationSuccessful(final String opID)
             throws WalletCallException, IOException, InterruptedException {
-        JsonArray response = this.executeCommandAndGetJsonArray(
-                "z_getoperationstatus", wrapStringParameter("[\"" + opID + "\"]"));
-        JsonObject jsonStatus = response.get(0).asObject();
-
-        String status = jsonStatus.getString("status", "ERROR");
+        final JsonArray response = this.executeCommandAndGetJsonArray(
+            "z_getoperationstatus", wrapStringParameter("[\"" + opID + "\"]")
+        );
+        final JsonObject jsonStatus = response.get(0).asObject();
+        final String status = jsonStatus.getString("status", "ERROR");
 
         System.out.println("Operation " + opID + " status is " + response + ".");
 
@@ -460,26 +449,25 @@ public class HushCommandLineBridge {
     }
 
     // May only be called for already failed operations
-    public synchronized String getOperationFinalErrorMessage(String opID)
+    public synchronized String getOperationFinalErrorMessage(final String opID)
             throws WalletCallException, IOException, InterruptedException {
-        JsonArray response = this.executeCommandAndGetJsonArray(
-                "z_getoperationstatus", wrapStringParameter("[\"" + opID + "\"]"));
-        JsonObject jsonStatus = response.get(0).asObject();
-
-        JsonObject jsonError = jsonStatus.get("error").asObject();
+        final JsonArray response = this.executeCommandAndGetJsonArray(
+            "z_getoperationstatus", wrapStringParameter("[\"" + opID + "\"]")
+        );
+        final JsonObject jsonStatus = response.get(0).asObject();
+        final JsonObject jsonError = jsonStatus.get("error").asObject();
         return jsonError.getString("message", "ERROR!");
     }
 
     public synchronized NetworkAndBlockchainInfo getNetworkAndBlockchainInfo()
             throws WalletCallException, IOException, InterruptedException {
-        NetworkAndBlockchainInfo info = new NetworkAndBlockchainInfo();
-
-        String strNumCons = this.executeCommandAndGetSingleStringResponse("getconnectioncount");
+        final NetworkAndBlockchainInfo info = new NetworkAndBlockchainInfo();
+        final String strNumCons = this.executeCommandAndGetSingleStringResponse("getconnectioncount");
         info.numConnections = Integer.valueOf(strNumCons.trim());
 
-        String strBlockCount = this.executeCommandAndGetSingleStringResponse("getblockcount");
-        String lastBlockHash = this.executeCommandAndGetSingleStringResponse("getblockhash", strBlockCount.trim());
-        JsonObject lastBlock = this.executeCommandAndGetJsonObject("getblock", wrapStringParameter(lastBlockHash.trim()));
+        final String strBlockCount = this.executeCommandAndGetSingleStringResponse("getblockcount");
+        final String lastBlockHash = this.executeCommandAndGetSingleStringResponse("getblockhash", strBlockCount.trim());
+        final JsonObject lastBlock = this.executeCommandAndGetJsonObject("getblock", wrapStringParameter(lastBlockHash.trim()));
         info.lastBlockDate = new Date(lastBlock.getLong("time", -1) * 1000L);
 
         return info;
@@ -487,7 +475,7 @@ public class HushCommandLineBridge {
 
     public synchronized void lockWallet()
             throws WalletCallException, IOException, InterruptedException {
-        String response = this.executeCommandAndGetSingleStringResponse("walletlock");
+        final String response = this.executeCommandAndGetSingleStringResponse("walletlock");
 
         // Response is expected to be empty
         if (response.trim().length() > 0) {
@@ -499,8 +487,9 @@ public class HushCommandLineBridge {
     // TODO: tests with a password containing spaces
     public synchronized void unlockWallet(String password)
             throws WalletCallException, IOException, InterruptedException {
-        String response = this.executeCommandAndGetSingleStringResponse(
-                "walletpassphrase", wrapStringParameter(password), "300");
+        final String response = this.executeCommandAndGetSingleStringResponse(
+            "walletpassphrase", wrapStringParameter(password), "300"
+        );
 
         // Response is expected to be empty
         if (response.trim().length() > 0) {
@@ -513,36 +502,33 @@ public class HushCommandLineBridge {
     // error: {"code":-15,"message":"Error: running with an unencrypted wallet, but walletlock was called."}
     public synchronized boolean isWalletEncrypted()
             throws WalletCallException, IOException, InterruptedException {
-        String[] params = new String[]{ this.hushcli.getCanonicalPath(), "walletlock" };
-        CommandExecutor caller = new CommandExecutor(params);
-        String strResult = caller.execute();
+        final String[] params = new String[]{ this.hushcli.getCanonicalPath(), "walletlock" };
+        final String strResult = new CommandExecutor(params).execute();
 
-        if (strResult.trim().length() <= 0) {
+        if (strResult.trim().length() == 0) {
             // If it could be locked with no result - obviously encrypted
             return true;
         } else if (strResult.trim().toLowerCase(Locale.ROOT).startsWith("error:")) {
             // Expecting an error of an unencrypted wallet
-            String jsonPart = strResult.substring(strResult.indexOf("{"));
-            JsonValue response = null;
+            final String jsonPart = strResult.substring(strResult.indexOf("{"));
             try {
-                response = Json.parse(jsonPart);
-            } catch (ParseException pe) {
-                throw new WalletCallException(jsonPart + "\n" + pe.getMessage() + "\n", pe);
-            }
-
-            JsonObject respObject = response.asObject();
-            if ((respObject.getDouble("code", -1) == -15) &&
-                        (respObject.getString("message", "ERR").contains("unencrypted wallet"))) {
-                // Obviously unencrupted
-                return false;
-            } else {
-                throw new WalletCallException("Unexpected response from wallet: " + strResult);
+                final JsonValue response = Json.parse(jsonPart);
+                final JsonObject respObject = response.asObject();
+                if ((respObject.getDouble("code", -1) == -15) &&
+                            respObject.getString("message", "ERR").contains("unencrypted wallet")) {
+                    // Obviously unencrypted
+                    return false;
+                } else {
+                    throw new WalletCallException("Unexpected response from wallet: " + strResult);
+                }
+            } catch (final ParseException e) {
+                throw new WalletCallException(jsonPart + "\n" + e.getMessage() + "\n", e);
             }
         } else if (strResult.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
-            JsonObject respObject = Util.getJsonErrorMessage(strResult);
+            final JsonObject respObject = jsonifyErrorMessage(strResult);
             if ((respObject.getDouble("code", -1) == -15) &&
-                        (respObject.getString("message", "ERR").contains("unencrypted wallet"))) {
-                // Obviously unencrupted
+                        respObject.getString("message", "ERR").contains("unencrypted wallet")) {
+                // Obviously unencrypted
                 return false;
             } else {
                 throw new WalletCallException("Unexpected response from wallet: " + strResult);
@@ -564,127 +550,131 @@ public class HushCommandLineBridge {
      *
      * @param password
      */
-    public synchronized void encryptWallet(String password)
+    public synchronized void encryptWallet(final String password)
             throws WalletCallException, IOException, InterruptedException {
-        String response = this.executeCommandAndGetSingleStringResponse(
-                "encryptwallet", wrapStringParameter(password));
-        System.out.println("Result of wallet encryption is: \n" + response);
+        final String result = this.executeCommandAndGetSingleStringResponse(
+            "encryptwallet", wrapStringParameter(password)
+        );
+        System.out.println("Result of wallet encryption is: \n" + result);
         // If no exception - obviously successful
     }
 
-    public synchronized void backupWallet(String fileName)
+    public synchronized void backupWallet(final String fileName)
             throws WalletCallException, IOException, InterruptedException {
         System.out.println("Backup up wallet to location: " + fileName);
-        String response = this.executeCommandAndGetSingleStringResponse(
-                "backupwallet", wrapStringParameter(fileName));
+        final String result = this.executeCommandAndGetSingleStringResponse(
+            "backupwallet", wrapStringParameter(fileName)
+        );
         // If no exception - obviously successful
     }
 
-    public synchronized void exportWallet(String fileName)
+    public synchronized void exportWallet(final String fileName)
             throws WalletCallException, IOException, InterruptedException {
         System.out.println("Export wallet keys to location: " + fileName);
-        String response = this.executeCommandAndGetSingleStringResponse(
-                "z_exportwallet", wrapStringParameter(fileName));
+        final String result = this.executeCommandAndGetSingleStringResponse(
+            "z_exportwallet", wrapStringParameter(fileName)
+        );
         // If no exception - obviously successful
     }
 
-    public synchronized void importWallet(String fileName)
+    public synchronized void importWallet(final String fileName)
             throws WalletCallException, IOException, InterruptedException {
         System.out.println("Import wallet keys from location: " + fileName);
-        String response = this.executeCommandAndGetSingleStringResponse(
-                "z_importwallet", wrapStringParameter(fileName));
+        final String result = this.executeCommandAndGetSingleStringResponse(
+            "z_importwallet", wrapStringParameter(fileName)
+        );
         // If no exception - obviously successful
     }
 
-    public synchronized String getTPrivateKey(String address)
+    public synchronized String getTPrivateKey(final String address)
             throws WalletCallException, IOException, InterruptedException {
-        String response = this.executeCommandAndGetSingleStringResponse(
-                "dumpprivkey", wrapStringParameter(address));
-
-        return response.trim();
+        final String result = this.executeCommandAndGetSingleStringResponse(
+            "dumpprivkey", wrapStringParameter(address)
+        );
+        return result.trim();
     }
 
-    public synchronized String getZPrivateKey(String address)
+    public synchronized String getZPrivateKey(final String address)
             throws WalletCallException, IOException, InterruptedException {
-        String response = this.executeCommandAndGetSingleStringResponse(
-                "z_exportkey", wrapStringParameter(address));
-
-        return response.trim();
+        final String result = this.executeCommandAndGetSingleStringResponse(
+            "z_exportkey", wrapStringParameter(address)
+        );
+        return result.trim();
     }
 
     // Imports a private key - tries both possibilities T/Z
-    public synchronized void importPrivateKey(String key)
+    public synchronized void importPrivateKey(final String key)
             throws WalletCallException, IOException, InterruptedException {
         // First try a Z key
-        String[] params = new String[]{ this.hushcli.getCanonicalPath(), "z_importkey", wrapStringParameter(key) };
-        CommandExecutor caller = new CommandExecutor(params);
-        String strResult = caller.execute();
+        final String[] params = new String[]{
+            this.hushcli.getCanonicalPath(),
+            "z_importkey",
+            wrapStringParameter(key)
+        };
+        final String result = new CommandExecutor(params).execute();
 
-        if ((strResult == null) || (strResult.trim().length() <= 0)) {
+        if ((result == null) || (result.trim().length() == 0)) {
             return;
         }
 
         // Obviously we have an error trying to import a Z key
-        if (strResult.trim().toLowerCase(Locale.ROOT).startsWith("error:")) {
+        if (result.trim().toLowerCase(Locale.ROOT).startsWith("error:")) {
             // Expecting an error of a T address key
-            String jsonPart = strResult.substring(strResult.indexOf("{"));
-            JsonValue response = null;
+            final String jsonPart = result.substring(result.indexOf("{"));
             try {
-                response = Json.parse(jsonPart);
-            } catch (ParseException pe) {
-                throw new WalletCallException(jsonPart + "\n" + pe.getMessage() + "\n", pe);
+                final JsonValue response = Json.parse(jsonPart);
+                final JsonObject respObject = response.asObject();
+                if ((respObject.getDouble("code", +123) == -1) &&
+                            respObject.getString("message", "ERR").contains("wrong network type")) {
+                    // Obviously T address - do nothing here
+                } else {
+                    throw new WalletCallException("Unexpected response from wallet: " + result);
+                }
+            } catch (final ParseException e) {
+                throw new WalletCallException(jsonPart + "\n" + e.getMessage() + "\n", e);
             }
-
-            JsonObject respObject = response.asObject();
+        } else if (result.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
+            final JsonObject respObject = jsonifyErrorMessage(result);
             if ((respObject.getDouble("code", +123) == -1) &&
-                        (respObject.getString("message", "ERR").contains("wrong network type"))) {
+                        respObject.getString("message", "ERR").contains("wrong network type")) {
                 // Obviously T address - do nothing here
             } else {
-                throw new WalletCallException("Unexpected response from wallet: " + strResult);
-            }
-        } else if (strResult.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
-            JsonObject respObject = Util.getJsonErrorMessage(strResult);
-            if ((respObject.getDouble("code", +123) == -1) &&
-                        (respObject.getString("message", "ERR").contains("wrong network type"))) {
-                // Obviously T address - do nothing here
-            } else {
-                throw new WalletCallException("Unexpected response from wallet: " + strResult);
+                throw new WalletCallException("Unexpected response from wallet: " + result);
             }
         } else {
-            throw new WalletCallException("Unexpected response from wallet: " + strResult);
+            throw new WalletCallException("Unexpected response from wallet: " + result);
         }
 
         // Second try a T key
-        strResult = this.executeCommandAndGetSingleStringResponse("importprivkey", wrapStringParameter(key));
+        final String result2 = this.executeCommandAndGetSingleStringResponse("importprivkey", wrapStringParameter(key));
 
-        if ((strResult == null) || (strResult.trim().length() <= 0)) {
+        if ((result2 == null) || (result2.trim().length() == 0)) {
             return;
         }
 
         // Obviously an error
-        throw new WalletCallException("Unexpected response from wallet: " + strResult);
+        throw new WalletCallException("Unexpected response from wallet: " + result2);
     }
 
-    private JsonObject executeCommandAndGetJsonObject(String command1, String command2)
+    private JsonObject executeCommandAndGetJsonObject(final String command1, final String command2)
             throws WalletCallException, IOException, InterruptedException {
-        JsonValue response = this.executeCommandAndGetJsonValue(command1, command2);
+        final JsonValue response = this.executeCommandAndGetJsonValue(command1, command2);
 
         if (response.isObject()) {
             return response.asObject();
         } else {
             throw new WalletCallException("Unexpected non-object response from wallet: " + response.toString());
         }
-
     }
 
-    private JsonArray executeCommandAndGetJsonArray(String command1, String command2)
+    private JsonArray executeCommandAndGetJsonArray(final String command1, final String command2)
             throws WalletCallException, IOException, InterruptedException {
         return this.executeCommandAndGetJsonArray(command1, command2, null);
     }
 
-    private JsonArray executeCommandAndGetJsonArray(String command1, String command2, String command3)
+    private JsonArray executeCommandAndGetJsonArray(final String command1, final String command2, final String command3)
             throws WalletCallException, IOException, InterruptedException {
-        JsonValue response = this.executeCommandAndGetJsonValue(command1, command2, command3);
+        final JsonValue response = this.executeCommandAndGetJsonValue(command1, command2, command3);
 
         if (response.isArray()) {
             return response.asArray();
@@ -693,38 +683,38 @@ public class HushCommandLineBridge {
         }
     }
 
-    private JsonValue executeCommandAndGetJsonValue(String command1, String command2)
+    private JsonValue executeCommandAndGetJsonValue(final String command1, final String command2)
             throws WalletCallException, IOException, InterruptedException {
         return this.executeCommandAndGetJsonValue(command1, command2, null);
     }
 
-    private JsonValue executeCommandAndGetJsonValue(String command1, String command2, String command3)
+    private JsonValue executeCommandAndGetJsonValue(final String command1, final String command2, final String command3)
             throws WalletCallException, IOException, InterruptedException {
-        String strResponse = this.executeCommandAndGetSingleStringResponse(command1, command2, command3);
-
-        JsonValue response = null;
+        final String result = this.executeCommandAndGetSingleStringResponse(command1, command2, command3);
         try {
-            response = Json.parse(strResponse);
-        } catch (ParseException pe) {
-            throw new WalletCallException(strResponse + "\n" + pe.getMessage() + "\n", pe);
+            final JsonValue response = Json.parse(result);
+            return response;
+        } catch (final ParseException e) {
+            throw new WalletCallException(result + "\n" + e.getMessage() + "\n", e);
         }
-
-        return response;
     }
 
-    private String executeCommandAndGetSingleStringResponse(String command1)
+    private String executeCommandAndGetSingleStringResponse(final String command1)
             throws WalletCallException, IOException, InterruptedException {
         return this.executeCommandAndGetSingleStringResponse(command1, null);
     }
 
-    private String executeCommandAndGetSingleStringResponse(String command1, String command2)
+    private String executeCommandAndGetSingleStringResponse(final String command1, final String command2)
             throws WalletCallException, IOException, InterruptedException {
         return this.executeCommandAndGetSingleStringResponse(command1, command2, null);
     }
 
-    private String executeCommandAndGetSingleStringResponse(String command1, String command2, String command3)
-            throws WalletCallException, IOException, InterruptedException {
-        String[] params;
+    private String executeCommandAndGetSingleStringResponse(
+        final String command1,
+        final String command2,
+        final String command3
+    ) throws WalletCallException, IOException, InterruptedException {
+        final String[] params;
         if (command3 != null) {
             params = new String[]{ this.hushcli.getCanonicalPath(), command1, command2, command3 };
         } else if (command2 != null) {
@@ -732,44 +722,59 @@ public class HushCommandLineBridge {
         } else {
             params = new String[]{ this.hushcli.getCanonicalPath(), command1 };
         }
+        final String result = new CommandExecutor(params).execute();
 
-        CommandExecutor caller = new CommandExecutor(params);
-
-        String strResponse = caller.execute();
-        if (strResponse.trim().toLowerCase(Locale.ROOT).startsWith("error:") ||
-                    strResponse.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
-            throw new WalletCallException("Error response from wallet: " + strResponse);
+        if (result.trim().toLowerCase(Locale.ROOT).startsWith("error:") ||
+                    result.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
+            throw new WalletCallException("Error response from wallet: " + result);
         }
-
-        return strResponse;
+        return result;
     }
 
     // Used to wrap string parameters on the command line - not doing so causes problems on Windows.
     private String wrapStringParameter(String param) {
-        OSUtil.OS_TYPE os = OSUtil.getOSType();
-
         // Fix is made for Windows only
-        if (os == OSUtil.OS_TYPE.WINDOWS) {
+        if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
             param = "\"" + param.replace("\"", "\\\"") + "\"";
         }
-
         return param;
     }
 
-    private void decomposeJSONValue(String name, JsonValue val, Map<String, String> map) {
+    private void decomposeJSONValue(final String name, final JsonValue val, final Map<String, String> map) {
         if (val.isObject()) {
-            JsonObject obj = val.asObject();
-            for (String memberName : obj.names()) {
+            final JsonObject obj = val.asObject();
+            for (final String memberName : obj.names()) {
                 this.decomposeJSONValue(name + "." + memberName, obj.get(memberName), map);
             }
         } else if (val.isArray()) {
-            JsonArray arr = val.asArray();
+            final JsonArray arr = val.asArray();
             for (int i = 0; i < arr.size(); i++) {
                 this.decomposeJSONValue(name + "[" + i + "]", arr.get(i), map);
             }
         } else {
             map.put(name, val.toString());
         }
+    }
+
+    // BRX-TODO: Is this still needed?
+    // Turns a 1.0.7+ error message to a an old json-style message
+    // info - new style error message
+    private JsonObject jsonifyErrorMessage(final String info) throws IOException {
+        final JsonObject result = new JsonObject();
+
+        // Error message here comes from ZCash 1.0.7+ and is like:
+        /*
+        hush-cli getinfo
+        error code: -28
+        error message:
+        Loading block index...
+        */
+        final LineNumberReader lnr = new LineNumberReader(new StringReader(info));
+        final int errCode = Integer.parseInt(lnr.readLine().substring(11).trim());
+        result.set("code", errCode);
+        lnr.readLine();
+        result.set("message", lnr.readLine().trim());
+        return result;
     }
 
     public static class WalletBalance {
@@ -802,5 +807,4 @@ public class HushCommandLineBridge {
             super(message);
         }
     }
-
 }

@@ -21,67 +21,62 @@ import java.util.Date;
 class DashboardPanel extends WalletTabPanel {
     private final JFrame parentFrame;
     private final HushDaemonObserver installationObserver;
-    private final HushCommandLineBridge clientCaller;
+    private final HushCommandLineBridge cliBridge;
     private final StatusUpdateErrorReporter errorReporter;
 
-    private JLabel networkAndBlockchainLabel;
-    private DataGatheringThread<HushCommandLineBridge.NetworkAndBlockchainInfo> netInfoGatheringThread;
+    private final JLabel networkAndBlockchainLabel;
+    private final DataGatheringThread<HushCommandLineBridge.NetworkAndBlockchainInfo> netInfoGatheringThread;
 
     private Boolean walletIsEncrypted = null;
     private Integer blockchainPercentage = null;
 
     private String OSInfo = null;
-    private JLabel daemonStatusLabel;
-    private DataGatheringThread<DaemonInfo> daemonInfoGatheringThread;
+    private final JLabel daemonStatusLabel;
+    private final DataGatheringThread<DaemonInfo> daemonInfoGatheringThread;
 
-    private JLabel walletBalanceLabel;
-    private DataGatheringThread<HushCommandLineBridge.WalletBalance> walletBalanceGatheringThread;
+    private final JLabel walletBalanceLabel;
+    private final DataGatheringThread<HushCommandLineBridge.WalletBalance> walletBalanceGatheringThread;
 
     private JScrollPane transactionsTablePane;
     private String[][] lastTransactionsData;
-    private DataGatheringThread<String[][]> transactionGatheringThread;
+    private final DataGatheringThread<String[][]> transactionGatheringThread;
 
-    DashboardPanel(JFrame parentFrame,
-                   HushDaemonObserver installationObserver,
-                   HushCommandLineBridge clientCaller,
-                   StatusUpdateErrorReporter errorReporter
+    DashboardPanel(final JFrame parentFrame,
+                   final HushDaemonObserver installationObserver,
+                   final HushCommandLineBridge cliBridge,
+                   final StatusUpdateErrorReporter errorReporter
     ) throws IOException, InterruptedException, HushCommandLineBridge.WalletCallException {
         this.parentFrame = parentFrame;
         this.installationObserver = installationObserver;
-        this.clientCaller = clientCaller;
+        this.cliBridge = cliBridge;
         this.errorReporter = errorReporter;
 
-        this.timers = new ArrayList<>();
-        this.threads = new ArrayList<>();
-
         // Build content
-        JPanel dashboard = this;
+        final JPanel dashboard = this;
         dashboard.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         dashboard.setLayout(new BorderLayout(0, 0));
 
         // Upper panel with wallet balance
-        JPanel balanceStatusPanel = new JPanel();
+        final JPanel balanceStatusPanel = new JPanel();
         // Use border layout to have balances to the left
         balanceStatusPanel.setLayout(new BorderLayout(3, 3));
         //balanceStatusPanel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
 
-        JPanel tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 13, 3));
-        JLabel logoLabel = new JLabel(new ImageIcon(
-                this.getClass().getClassLoader().getResource("images/hush-logo-sm.png")));
+        final JPanel tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 13, 3));
+        final JLabel logoLabel = new JLabel(new ImageIcon(this.getClass().getClassLoader().getResource("images/hush-logo-sm.png")));
         tempPanel.add(logoLabel);
         //tempPanel.add(new JLabel(" "));
-        JLabel zcLabel = new JLabel("HUSH Wallet     ");
-        zcLabel.setFont(new Font("Helvetica", Font.BOLD | Font.ITALIC, 32));
-        tempPanel.add(zcLabel);
+        final JLabel hushLabel = new JLabel("HUSH Wallet     ");
+        hushLabel.setFont(new Font("Helvetica", Font.BOLD | Font.ITALIC, 32));
+        tempPanel.add(hushLabel);
         //tempPanel.setToolTipText("Powered by Hush\u00AE");
         balanceStatusPanel.add(tempPanel, BorderLayout.WEST);
 
-        JLabel transactionHeadingLabel = new JLabel(
-                "<html><span style=\"font-size:23px\"><br/></span>Transactions:</html>");
+        final JLabel transactionHeadingLabel = new JLabel("<html><span style=\"font-size:23px\"><br/></span>Transactions:</html>");
         transactionHeadingLabel.setFont(new Font("Helvetica", Font.BOLD, 19));
         balanceStatusPanel.add(transactionHeadingLabel, BorderLayout.CENTER);
 
-        PresentationPanel walletBalancePanel = new PresentationPanel();
+        final PresentationPanel walletBalancePanel = new PresentationPanel();
         walletBalancePanel.add(walletBalanceLabel = new JLabel());
         balanceStatusPanel.add(walletBalancePanel, BorderLayout.EAST);
 
@@ -92,14 +87,14 @@ class DashboardPanel extends WalletTabPanel {
         dashboard.add(transactionsTablePane = new JScrollPane(this.createTransactionsTable(lastTransactionsData)), BorderLayout.CENTER);
 
         // Lower panel with installation status
-        JPanel installationStatusPanel = new JPanel();
+        final JPanel installationStatusPanel = new JPanel();
         installationStatusPanel.setLayout(new BorderLayout(3, 3));
         //installationStatusPanel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
-        PresentationPanel daemonStatusPanel = new PresentationPanel();
+        final PresentationPanel daemonStatusPanel = new PresentationPanel();
         daemonStatusPanel.add(daemonStatusLabel = new JLabel());
         installationStatusPanel.add(daemonStatusPanel, BorderLayout.WEST);
 
-        PresentationPanel networkAndBlockchainPanel = new PresentationPanel();
+        final PresentationPanel networkAndBlockchainPanel = new PresentationPanel();
         networkAndBlockchainPanel.add(networkAndBlockchainLabel = new JLabel());
         installationStatusPanel.add(networkAndBlockchainPanel, BorderLayout.EAST);
 
@@ -107,113 +102,108 @@ class DashboardPanel extends WalletTabPanel {
 
         // Thread and timer to update the daemon status
         this.daemonInfoGatheringThread = new DataGatheringThread<>(
-                () -> {
-                    long start = System.currentTimeMillis();
-                    DaemonInfo daemonInfo = DashboardPanel.this.installationObserver.getDaemonInfo();
-                    long end = System.currentTimeMillis();
-                    System.out.println("Gathering of dashboard daemon status data done in " + (end - start) + "ms.");
-
-                    return daemonInfo;
-                },
-                this.errorReporter, 2000, true
+            () -> {
+                final long start = System.currentTimeMillis();
+                final DaemonInfo daemonInfo = DashboardPanel.this.installationObserver.getDaemonInfo();
+                final long end = System.currentTimeMillis();
+                System.out.println("Gathering of dashboard daemon status data done in " + (end - start) + "ms.");
+                return daemonInfo;
+            },
+            this.errorReporter, 2000, true
         );
         this.threads.add(this.daemonInfoGatheringThread);
 
-        ActionListener alDeamonStatus = actionEvent -> {
+        final ActionListener alDeamonStatus = actionEvent -> {
             try {
                 DashboardPanel.this.updateDaemonStatusLabel();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                DashboardPanel.this.errorReporter.reportError(ex);
+            } catch (final Exception e) {
+                e.printStackTrace();
+                DashboardPanel.this.errorReporter.reportError(e);
             }
         };
-        Timer timer = new Timer(1000, alDeamonStatus);
+        final Timer timer = new Timer(1000, alDeamonStatus);
         timer.start();
         this.timers.add(timer);
 
         // Thread and timer to update the wallet balance
         this.walletBalanceGatheringThread = new DataGatheringThread<>(
-                () -> {
-                    long start = System.currentTimeMillis();
-                    HushCommandLineBridge.WalletBalance balance = DashboardPanel.this.clientCaller.getWalletInfo();
-                    long end = System.currentTimeMillis();
+            () -> {
+                final long start = System.currentTimeMillis();
+                final HushCommandLineBridge.WalletBalance balance = DashboardPanel.this.cliBridge.getWalletInfo();
+                final long end = System.currentTimeMillis();
 
-                    // TODO: move this call to a dedicated one-off gathering thread - this is the wrong place
-                    // it works but a better design is needed.
-                    if (DashboardPanel.this.walletIsEncrypted == null) {
-                        DashboardPanel.this.walletIsEncrypted = DashboardPanel.this.clientCaller.isWalletEncrypted();
-                    }
-
-                    System.out.println("Gathering of dashboard wallet balance data done in " + (end - start) + "ms.");
-
-                    return balance;
-                },
-                this.errorReporter, 8000, true
+                // TODO: move this call to a dedicated one-off gathering thread - this is the wrong place
+                // it works but a better design is needed.
+                if (DashboardPanel.this.walletIsEncrypted == null) {
+                    DashboardPanel.this.walletIsEncrypted = DashboardPanel.this.cliBridge.isWalletEncrypted();
+                }
+                System.out.println("Gathering of dashboard wallet balance data done in " + (end - start) + "ms.");
+                return balance;
+            },
+            this.errorReporter, 8000, true
         );
         this.threads.add(this.walletBalanceGatheringThread);
 
-        ActionListener alWalletBalance = e -> {
+        final ActionListener alWalletBalance = actionEvent -> {
             try {
                 DashboardPanel.this.updateWalletStatusLabel();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                DashboardPanel.this.errorReporter.reportError(ex);
+            } catch (final Exception e) {
+                e.printStackTrace();
+                DashboardPanel.this.errorReporter.reportError(e);
             }
         };
-        Timer walletBalanceTimer = new Timer(2000, alWalletBalance);
+        final Timer walletBalanceTimer = new Timer(2000, alWalletBalance);
         walletBalanceTimer.setInitialDelay(1000);
         walletBalanceTimer.start();
         this.timers.add(walletBalanceTimer);
 
         // Thread and timer to update the transactions table
         this.transactionGatheringThread = new DataGatheringThread<>(
-                () -> {
-                    long start = System.currentTimeMillis();
-                    String[][] data = DashboardPanel.this.getTransactionsDataFromWallet();
-                    long end = System.currentTimeMillis();
-                    System.out.println("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms.");
-
-                    return data;
-                },
-                this.errorReporter, 25000
+            () -> {
+                final long start = System.currentTimeMillis();
+                final String[][] data = DashboardPanel.this.getTransactionsDataFromWallet();
+                final long end = System.currentTimeMillis();
+                System.out.println("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms.");
+                return data;
+            },
+            this.errorReporter, 25000
         );
         this.threads.add(this.transactionGatheringThread);
 
-        ActionListener alTransactions = e -> {
+        final ActionListener alTransactions = actionEvent -> {
             try {
                 DashboardPanel.this.updateWalletTransactionsTable();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                DashboardPanel.this.errorReporter.reportError(ex);
+            } catch (final Exception e) {
+                e.printStackTrace();
+                DashboardPanel.this.errorReporter.reportError(e);
             }
         };
-        timer = new Timer(5000, alTransactions);
-        timer.start();
-        this.timers.add(timer);
+        final Timer updateTransactionsTimer = new Timer(5000, alTransactions);
+        updateTransactionsTimer.start();
+        this.timers.add(updateTransactionsTimer);
 
         // Thread and timer to update the network and blockchain details
         this.netInfoGatheringThread = new DataGatheringThread<>(
-                () -> {
-                    long start = System.currentTimeMillis();
-                    HushCommandLineBridge.NetworkAndBlockchainInfo data = DashboardPanel.this.clientCaller.getNetworkAndBlockchainInfo();
-                    long end = System.currentTimeMillis();
-                    System.out.println("Gathering of network and blockchain info data done in " + (end - start) + "ms.");
-
-                    return data;
-                },
-                this.errorReporter, 10000, true
+            () -> {
+                final long start = System.currentTimeMillis();
+                final HushCommandLineBridge.NetworkAndBlockchainInfo data = DashboardPanel.this.cliBridge.getNetworkAndBlockchainInfo();
+                final long end = System.currentTimeMillis();
+                System.out.println("Gathering of network and blockchain info data done in " + (end - start) + "ms.");
+                return data;
+            },
+            this.errorReporter, 10000, true
         );
         this.threads.add(this.netInfoGatheringThread);
 
-        ActionListener alNetAndBlockchain = e -> {
+        final ActionListener alNetAndBlockchain = actionEvent -> {
             try {
                 DashboardPanel.this.updateNetworkAndBlockchainLabel();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                DashboardPanel.this.errorReporter.reportError(ex);
+            } catch (final Exception e) {
+                e.printStackTrace();
+                DashboardPanel.this.errorReporter.reportError(e);
             }
         };
-        Timer netAndBlockchainTimer = new Timer(5000, alNetAndBlockchain);
+        final Timer netAndBlockchainTimer = new Timer(5000, alNetAndBlockchain);
         netAndBlockchainTimer.setInitialDelay(1000);
         netAndBlockchainTimer.start();
         this.timers.add(netAndBlockchainTimer);
@@ -224,84 +214,66 @@ class DashboardPanel extends WalletTabPanel {
         return this.blockchainPercentage;
     }
 
-    private void updateDaemonStatusLabel()
-            throws IOException, InterruptedException {
-        DaemonInfo daemonInfo = this.daemonInfoGatheringThread.getLastData();
+    private void updateDaemonStatusLabel() throws IOException, InterruptedException {
+        final DaemonInfo daemonInfo = this.daemonInfoGatheringThread.getLastData();
 
         // It is possible there has been no gathering initially
         if (daemonInfo == null) {
             return;
         }
 
-        String daemonStatus = "<span style=\"color:green;font-weight:bold\">RUNNING</span>";
-        if (daemonInfo.status != DAEMON_STATUS.RUNNING) {
-            daemonStatus = "<span style=\"color:red;font-weight:bold\">NOT RUNNING</span>";
-        }
-
-        String runtimeInfo = "";
-
         // If the virtual size/CPU are 0 - do not show them
-        String virtual = "";
-        if (daemonInfo.virtualSizeMB > 0) {
-            virtual = ", Virtual: " + daemonInfo.virtualSizeMB + " MB";
-        }
+        final String virtual = (daemonInfo.virtualSizeMB > 0) ? ", Virtual: " + daemonInfo.virtualSizeMB + " MB" : "";
+        final String cpuPercentage = (daemonInfo.cpuPercentage > 0) ? ", CPU: " + daemonInfo.cpuPercentage + "%" : "";
 
-        String cpuPercentage = "";
-        if (daemonInfo.cpuPercentage > 0) {
-            cpuPercentage = ", CPU: " + daemonInfo.cpuPercentage + "%";
-        }
-
+        final String daemonStatus;
+        final String runtimeInfo;
         if (daemonInfo.status == DAEMON_STATUS.RUNNING) {
+            daemonStatus = "<span style=\"color:green;font-weight:bold\">RUNNING</span>";
             runtimeInfo = "<span style=\"font-size:8px\">" +
-                                  "Resident: " + daemonInfo.residentSizeMB + " MB" + virtual +
-                                  cpuPercentage + "</span>";
+                          "Resident: " + daemonInfo.residentSizeMB + " MB" + virtual + cpuPercentage +
+                          "</span>";
+        } else {
+            daemonStatus = "<span style=\"color:red;font-weight:bold\">NOT RUNNING</span>";
+            runtimeInfo = "";
         }
 
         // TODO: what if Hush directory is non-default...
-        File walletDAT = new File(OSUtil.getBlockchainDirectory() + "/wallet.dat");
+        final File walletDAT = new File(OSUtil.getBlockchainDirectory() + "/wallet.dat");
 
         if (this.OSInfo == null) {
             this.OSInfo = OSUtil.getSystemInfo();
         }
 
-        String walletEncryption = "";
         // TODO: Use a one-off data gathering thread - better design
-        if (this.walletIsEncrypted != null) {
-            walletEncryption =
-                    "<span style=\"font-size:8px\">" +
-                            " (" + (this.walletIsEncrypted ? "" : "not ") + "encrypted)" +
-                            "</span>";
-        }
+        final String walletEncryption = (this.walletIsEncrypted == null) ? "" :
+            "<span style=\"font-size:8px\"> (" + (this.walletIsEncrypted ? "" : "not ") + "encrypted)</span>";
 
-        String text =
-                "<html><span style=\"font-weight:bold;color:#303030\">hushd</span> status: " +
-                        daemonStatus + ",  " + runtimeInfo + " <br/>" +
-                        "Wallet: <span style=\"font-weight:bold;color:#303030\">" + walletDAT.getCanonicalPath() + "</span>" +
-                        walletEncryption + " <br/> " +
-                        "<span style=\"font-size:3px\"><br/></span>" +
-                        "<span style=\"font-size:8px\">" +
-                        "Installation: " + OSUtil.getProgramDirectory() + ", " +
-                        "Blockchain: " + OSUtil.getBlockchainDirectory() + " <br/> " +
-                        "System: " + this.OSInfo + " </span> </html>";
-        this.daemonStatusLabel.setText(text);
+        this.daemonStatusLabel.setText(
+            "<html>" +
+            "<span style=\"font-weight:bold;color:#303030\">hushd</span> status: " +daemonStatus + ",  " + runtimeInfo + " <br/>" +
+            "Wallet: <span style=\"font-weight:bold;color:#303030\">" + walletDAT.getCanonicalPath() + "</span>" + walletEncryption + " <br/> " +
+            "<span style=\"font-size:3px\"><br/></span>" + // BRX-TODO: ??? tiny newline?
+            "<span style=\"font-size:8px\">" +
+            "Installation: " + OSUtil.getProgramDirectory() + ", " +
+            "Blockchain: " + OSUtil.getBlockchainDirectory() + " <br/> " +
+            "System: " + this.OSInfo + " </span> </html>"
+        );
     }
 
-
     private void updateNetworkAndBlockchainLabel() {
-        HushCommandLineBridge.NetworkAndBlockchainInfo info = this.netInfoGatheringThread.getLastData();
+        final HushCommandLineBridge.NetworkAndBlockchainInfo info = this.netInfoGatheringThread.getLastData();
 
         // It is possible there has been no gathering initially
         if (info == null) {
             return;
         }
-
         final Date startDate = new Date("18 Nov 2016 01:53:31 GMT");
         final Date nowDate = new Date(System.currentTimeMillis());
 
-        long fullTime = nowDate.getTime() - startDate.getTime();
-        long remainingTime = nowDate.getTime() - info.lastBlockDate.getTime();
+        final long fullTime = nowDate.getTime() - startDate.getTime();
+        final long remainingTime = nowDate.getTime() - info.lastBlockDate.getTime();
 
-        String percentage = "100";
         if (remainingTime > 20 * 60 * 1000) // After 20 min we report 100% anyway
         {
             double dPercentage = 100d - (((double) remainingTime / (double) fullTime) * 100d);
@@ -310,15 +282,14 @@ class DashboardPanel extends WalletTabPanel {
             } else if (dPercentage > 100d) {
                 dPercentage = 100d;
             }
-
-            DecimalFormat df = new DecimalFormat("##0.##");
-            percentage = df.format(dPercentage);
-
             // Also set a member that may be queried
             this.blockchainPercentage = (int) dPercentage;
         } else {
             this.blockchainPercentage = 100;
         }
+
+        final String percentage =
+            blockchainPercentage == 100 ? "100" : new DecimalFormat("##0.##").format(this.blockchainPercentage);
 
         // Just in case early on the call returns some junk date
         if (info.lastBlockDate.before(startDate)) {
@@ -326,49 +297,44 @@ class DashboardPanel extends WalletTabPanel {
             info.lastBlockDate = startDate;
         }
 
-        String connections = " \u26D7";
-        String tickSymbol = " \u2705";
-        OSUtil.OS_TYPE os = OSUtil.getOSType();
+        final String connections;
+        final String tickSymbol;
+        final OSUtil.OS_TYPE os = OSUtil.getOSType();
         // Handling special symbols on Mac OS/Windows
         // TODO: isolate OS-specific symbol stuff in separate code
         if ((os == OSUtil.OS_TYPE.MAC_OS) || (os == OSUtil.OS_TYPE.WINDOWS)) {
             connections = " \u21D4";
             tickSymbol = " \u2606";
+        } else {
+            connections = " \u26D7";
+            tickSymbol = " \u2705";
         }
 
-        String tick = "";
-        if (percentage.equals("100")) {
-            tick = "<span style=\"font-weight:bold;font-size:12px;color:green\">" + tickSymbol + "</span>";
-        }
+        final String tick = percentage.equals("100") ?
+            "<span style=\"font-weight:bold;font-size:12px;color:green\">" + tickSymbol + "</span>" : "";
 
-        String netColor = "red";
-        if (info.numConnections > 0) {
-            netColor = "#cc3300";
-        }
-
-        if (info.numConnections > 2) {
-            netColor = "black";
-        }
-
+        final String netColor;
         if (info.numConnections > 6) {
             netColor = "green";
+        } else if (info.numConnections > 2) {
+            netColor = "black";
+        } else if (info.numConnections > 0) {
+            netColor = "#cc3300";
+        } else {
+            netColor = "red";
         }
 
-        String text =
-                "<html> " +
-                        "Blockchain synchronized: <span style=\"font-weight:bold\">" +
-                        percentage + "% </span> " + tick + " <br/>" +
-                        "Up to: <span style=\"font-size:8px;font-weight:bold\">" +
-                        info.lastBlockDate.toLocaleString() + "</span>  <br/> " +
-                        "<span style=\"font-size:1px\"><br/></span>" +
-                        "Network: <span style=\"font-weight:bold\">" + info.numConnections + " connections</span>" +
-                        "<span style=\"font-size:16px;color:" + netColor + "\">" + connections + "</span>";
-        this.networkAndBlockchainLabel.setText(text);
+        this.networkAndBlockchainLabel.setText(
+            "<html>Blockchain synchronized: <span style=\"font-weight:bold\">" + percentage + "% </span> " + tick + " <br/>" +
+            "Up to: <span style=\"font-size:8px;font-weight:bold\">" + info.lastBlockDate.toLocaleString() + "</span>  <br/> " +
+            "<span style=\"font-size:1px\"><br/></span>" +
+            "Network: <span style=\"font-weight:bold\">" + info.numConnections + " connections</span>" +
+            "<span style=\"font-size:16px;color:" + netColor + "\">" + connections + "</span>"
+        );
     }
 
-
     private void updateWalletStatusLabel() {
-        HushCommandLineBridge.WalletBalance balance = this.walletBalanceGatheringThread.getLastData();
+        final HushCommandLineBridge.WalletBalance balance = this.walletBalanceGatheringThread.getLastData();
 
         // It is possible there has been no gathering initially
         if (balance == null) {
@@ -376,64 +342,59 @@ class DashboardPanel extends WalletTabPanel {
         }
 
         // Format double numbers - else sometimes we get exponential notation 1E-4 ZEC
-        DecimalFormat df = new DecimalFormat("########0.00######");
+        final DecimalFormat df = new DecimalFormat("########0.00######");
 
-        String transparentBalance = df.format(balance.transparentBalance);
-        String privateBalance = df.format(balance.privateBalance);
-        String totalBalance = df.format(balance.totalBalance);
+        final String transparentBalance = df.format(balance.transparentBalance);
+        final String privateBalance = df.format(balance.privateBalance);
+        final String totalBalance = df.format(balance.totalBalance);
 
-        String transparentUCBalance = df.format(balance.transparentUnconfirmedBalance);
-        String privateUCBalance = df.format(balance.privateUnconfirmedBalance);
-        String totalUCBalance = df.format(balance.totalUnconfirmedBalance);
+        final String transparentUCBalance = df.format(balance.transparentUnconfirmedBalance);
+        final String privateUCBalance = df.format(balance.privateUnconfirmedBalance);
+        final String totalUCBalance = df.format(balance.totalUnconfirmedBalance);
 
-        String color1 = transparentBalance.equals(transparentUCBalance) ? "" : "color:#cc3300;";
-        String color2 = privateBalance.equals(privateUCBalance) ? "" : "color:#cc3300;";
-        String color3 = totalBalance.equals(totalUCBalance) ? "" : "color:#cc3300;";
+        final String color1 = transparentBalance.equals(transparentUCBalance) ? "" : "color:#cc3300;";
+        final String color2 = privateBalance.equals(privateUCBalance) ? "" : "color:#cc3300;";
+        final String color3 = totalBalance.equals(totalUCBalance) ? "" : "color:#cc3300;";
 
-        String text =
-                "<html>" +
-                        "<span style=\"font-family:monospace;font-size:8.9px;" + color1 + "\">Transparent balance: <span style=\"font-size:9px\">" +
-                        transparentUCBalance + " HUSH </span></span><br/> " +
-                        "<span style=\"font-family:monospace;font-size:8.9px;" + color2 + "\">Private (Z) balance: <span style=\"font-weight:bold;font-size:9px\">" +
-                        privateUCBalance + " HUSH </span></span><br/> " +
-                        "<span style=\"font-family:monospace;font-size:8.9px;" + color3 + "\">Total (Z+T) balance: <span style=\"font-weight:bold;font-size:11.5px;\">" +
-                        totalUCBalance + " HUSH </span></span>" +
-                        "<br/>  </html>";
+        this.walletBalanceLabel.setText(
+            "<html>" +
+            "<span style=\"font-family:monospace;font-size:8.9px;" + color1 + "\">" +
+                "Transparent balance: <span style=\"font-size:9px\">" + transparentUCBalance + " HUSH </span>" +
+            "</span><br/> " +
+            "<span style=\"font-family:monospace;font-size:8.9px;" + color2 + "\">" +
+                "Private (Z) balance: <span style=\"font-weight:bold;font-size:9px\">" + privateUCBalance + " HUSH </span>" +
+                    "</span><br/> " +
+            "<span style=\"font-family:monospace;font-size:8.9px;" + color3 + "\">" +
+                "Total (Z+T) balance: <span style=\"font-weight:bold;font-size:11.5px;\">" + totalUCBalance + " HUSH </span>" +
+            "</span><br/>  </html>"
+       );
 
-        this.walletBalanceLabel.setText(text);
-
-        String toolTip = null;
-        if ((!transparentBalance.equals(transparentUCBalance)) ||
-                    (!privateBalance.equals(privateUCBalance)) ||
-                    (!totalBalance.equals(totalUCBalance))) {
-            toolTip = "<html>" +
-                              "Unconfirmed (unspendable) balance is being shown due to an<br/>" +
-                              "ongoing transaction! Actual confirmed (spendable) balance is:<br/>" +
-                              "<span style=\"font-size:5px\"><br/></span>" +
-                              "Transparent: " + transparentBalance + " HUSH<br/>" +
-                              "Private ( Z ): <span style=\"font-weight:bold\">" + privateBalance + " HUSH</span><br/>" +
-                              "Total ( Z+T ): <span style=\"font-weight:bold\">" + totalBalance + " HUSH</span>" +
-                              "</html>";
+        final String toolTip;
+        if (transparentBalance.equals(transparentUCBalance) && !privateBalance.equals(privateUCBalance) && totalBalance.equals(totalUCBalance)) {
+            toolTip = null;
+        } else { // some balances don't line up
+            toolTip = "<html>Unconfirmed (unspendable) balance is being shown due to an<br/>" +
+                      "ongoing transaction! Actual confirmed (spendable) balance is:<br/>" +
+                      "<span style=\"font-size:5px\"><br/></span>" +
+                      "Transparent: " + transparentBalance + " HUSH<br/>" +
+                      "Private ( Z ): <span style=\"font-weight:bold\">" + privateBalance + " HUSH</span><br/>" +
+                      "Total ( Z+T ): <span style=\"font-weight:bold\">" + totalBalance + " HUSH</span></html>";
         }
-
         this.walletBalanceLabel.setToolTipText(toolTip);
     }
 
-
     private void updateWalletTransactionsTable() {
-        String[][] newTransactionsData = this.transactionGatheringThread.getLastData();
+        final String[][] newTransactionsData = this.transactionGatheringThread.getLastData();
 
         // May be null - not even gathered once
         if (newTransactionsData == null) {
             return;
         }
-
         if (!Arrays.deepEquals(lastTransactionsData, newTransactionsData)) {
             System.out.println("Updating table of transactions...");
             this.remove(transactionsTablePane);
             this.add(transactionsTablePane = new JScrollPane(this.createTransactionsTable(newTransactionsData)), BorderLayout.CENTER);
         }
-
         lastTransactionsData = newTransactionsData;
 
         this.validate();
@@ -442,9 +403,8 @@ class DashboardPanel extends WalletTabPanel {
 
 
     private JTable createTransactionsTable(String rowData[][]) {
-        String columnNames[] = { "Type", "Direction", "Confirmed?", "Amount", "Date", "Destination Address" };
-        JTable table = new TransactionTable(
-                rowData, columnNames, this.parentFrame, this.clientCaller);
+        final String columnNames[] = { "Type", "Direction", "Confirmed?", "Amount", "Date", "Destination Address" };
+        final JTable table = new TransactionTable(rowData, columnNames, this.parentFrame, this.cliBridge);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         table.getColumnModel().getColumn(0).setPreferredWidth(190);
         table.getColumnModel().getColumn(1).setPreferredWidth(145);
@@ -452,7 +412,6 @@ class DashboardPanel extends WalletTabPanel {
         table.getColumnModel().getColumn(3).setPreferredWidth(210);
         table.getColumnModel().getColumn(4).setPreferredWidth(405);
         table.getColumnModel().getColumn(5).setPreferredWidth(800);
-
         return table;
     }
 
@@ -460,57 +419,58 @@ class DashboardPanel extends WalletTabPanel {
     private String[][] getTransactionsDataFromWallet()
             throws HushCommandLineBridge.WalletCallException, IOException, InterruptedException {
         // Get available public+private transactions and unify them.
-        String[][] publicTransactions = this.clientCaller.getWalletPublicTransactions();
-        String[][] zReceivedTransactions = this.clientCaller.getWalletZReceivedTransactions();
+        final String[][] publicTransactions = this.cliBridge.getWalletPublicTransactions();
+        final String[][] zReceivedTransactions = this.cliBridge.getWalletZReceivedTransactions();
 
-        String[][] allTransactions = new String[publicTransactions.length + zReceivedTransactions.length][];
+        // BRX-TODO: Same comments here re. preallocated arrays vs. Lists and needing this counter
+        final String[][] allTransactions = new String[publicTransactions.length + zReceivedTransactions.length][];
 
         int i = 0;
 
-        for (String[] t : publicTransactions) {
+        for (final String[] t : publicTransactions) {
             allTransactions[i++] = t;
         }
-
-        for (String[] t : zReceivedTransactions) {
+        for (final String[] t : zReceivedTransactions) {
             allTransactions[i++] = t;
         }
 
         // Sort transactions by date
-        Arrays.sort(allTransactions, (o1, o2) -> {
-            Date d1 = new Date(0);
-            if (!o1[4].equals("N/A")) {
-                d1 = new Date(Long.valueOf(o1[4]) * 1000L);
-            }
+        Arrays.sort(allTransactions, (a, b) -> {
+            // BRX-TODO: Can't we just compare a[4] vs b[4] since they're numbers?
+            final Date aDate = new Date(
+                a[4].equals("N/A") ? 0 : Long.valueOf(a[4]) * 1000L
+            );
+            final Date bDate = new Date(
+                b[4].equals("N/A") ? 0 : Long.valueOf(b[4]) * 1000L
+            );
 
-            Date d2 = new Date(0);
-            if (!o2[4].equals("N/A")) {
-                d2 = new Date(Long.valueOf(o2[4]) * 1000L);
-            }
-
-            if (d1.equals(d2)) {
+            if (aDate.equals(bDate)) {
                 return 0;
             } else {
-                return d2.compareTo(d1);
+                return bDate.compareTo(aDate);
             }
         });
 
 
         // Confirmation symbols
-        String confirmed = "\u2690";
-        String notConfirmed = "\u2691";
+        final String confirmed;
+        final String notConfirmed;
 
         // Windows does not support the flag symbol (Windows 7 by default)
         // TODO: isolate OS-specific symbol codes in a separate class
         OSUtil.OS_TYPE os = OSUtil.getOSType();
-        if (os == OSUtil.OS_TYPE.WINDOWS) {
+        if (OSUtil.getOSType() != OSUtil.OS_TYPE.WINDOWS) {
+            confirmed = "\u2690";
+            notConfirmed = "\u2691";
+        } else { // Windows snowflake
             confirmed = " \u25B7";
             notConfirmed = " \u25B6";
         }
 
-        DecimalFormat df = new DecimalFormat("########0.00######");
+        final DecimalFormat decimalFormat = new DecimalFormat("########0.00######");
 
         // Change the direction and date etc. attributes for presentation purposes
-        for (String[] trans : allTransactions) {
+        for (final String[] trans : allTransactions) {
             // Direction
             switch (trans[1]) {
                 case "receive":
@@ -534,28 +494,20 @@ class DashboardPanel extends WalletTabPanel {
 
             // Amount
             try {
-                double amount = Double.valueOf(trans[3]);
-                if (amount < 0d) {
-                    amount = -amount;
-                }
-                trans[3] = df.format(amount);
+                final double amount = Math.abs(Double.valueOf(trans[3]));
+                trans[3] = decimalFormat.format(amount);
             } catch (final NumberFormatException e) {
-                System.out.println("Error occurred while formatting amount: " + trans[3] +
-                                           " - " + e.getMessage() + "!");
+                System.out.println("Error occurred while formatting amount: " + trans[3] + " - " + e.getMessage() + "!");
             }
 
             // Confirmed?
             try {
-                boolean isConfirmed = !trans[2].trim().equals("0");
-
+                final boolean isConfirmed = !trans[2].trim().equals("0");
                 trans[2] = isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed);
             } catch (final NumberFormatException e) {
-                System.out.println("Error occurred while formatting confirmations: " + trans[2] +
-                                           " - " + e.getMessage() + "!");
+                System.out.println("Error occurred while formatting confirmations: " + trans[2] + " - " + e.getMessage() + "!");
             }
         }
-
         return allTransactions;
     }
-
 }
