@@ -10,13 +10,23 @@ IF NOT EXIST %AppData%\Hush\hush.conf (
     echo addnode=stilgar.leto.net
     echo addnode=zdash.suprnova.cc
     echo addnode=dnsseed.myhush.org
+    echo addnode=dnsseed2.myhush.org
+    echo addnode=dnsseed.bleuzero.com
+    echo addnode=dnsseed.hush.quebec
     echo rpcuser=username
     echo rpcpassword=password%random%%random%
     echo daemon=1
     echo showmetrics=0
     echo gen=0
   ) > %AppData%\Hush\hush.conf
-) 
+) ELSE (
+  (
+    echo addnode=dnsseed.myhush.org
+    echo addnode=dnsseed2.myhush.org
+    echo addnode=dnsseed.bleuzero.com
+    echo addnode=dnsseed.hush.quebec
+  ) >> %AppData%\Hush\hush.conf
+)
 
 IF NOT EXIST %LocalAppData%\HushSwingWalletUI\addressBook.csv (
   (
