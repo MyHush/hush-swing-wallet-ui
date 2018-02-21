@@ -259,18 +259,8 @@ class AddressesPanel extends WalletTabPanel {
         // Format double numbers - else sometimes we get exponential notation 1E-4 ZEC
         final DecimalFormat df = new DecimalFormat("########0.00######");
 
-        final String confirmed;
-        final String notConfirmed;
-
-        // Windows does not support the flag symbol (Windows 7 by default)
-        // TODO: isolate OS-specific symbol codes in a separate class
-        if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
-            confirmed = " \u25B7";
-            notConfirmed = " \u25B6";
-        } else {
-            confirmed = "\u2690";
-            notConfirmed = "\u2691";
-        }
+        final String confirmed = App.SPECIAL_CHARACTER_PROVIDER.getConfirmedBalanceSymbol();
+        final String notConfirmed = App.SPECIAL_CHARACTER_PROVIDER.getUnconfirmedBalanceSymbol();
 
         int i = 0;
 
@@ -310,7 +300,7 @@ class AddressesPanel extends WalletTabPanel {
 
             addressBalances[i++] = new String[]{
                    balanceToShow,
-                   isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
+                   isConfirmed ? ("Yes  " + confirmed) : ("No  " + notConfirmed),
                    addressToDisplay
             };
         }
@@ -324,7 +314,7 @@ class AddressesPanel extends WalletTabPanel {
 
             addressBalances[i++] = new String[]{
                     balanceToShow,
-                    isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
+                    isConfirmed ? ("Yes  " + confirmed) : ("No  " + notConfirmed),
                     address
             };
         }

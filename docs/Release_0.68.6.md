@@ -28,7 +28,7 @@ c633a6e4067e7bb7a9438c93621b8a2cfb5b5076ac2cda3401244128586a925e  HUSH_Wallet_0.
 Double click on `HUSHSwingWalletUI.exe`. On first run (only) the wallet will download the cryptographic keys 
 (900MB or so). In case of problems logs are written in `%LOCALAPPDATA%\HUSHSwingWalletUI\` for diagnostics.
 
-**Important:** The HUSH Node 1.0.9 uses as a data directory `%APPDATA%\Hush` for its wallet and blcok-chain. 
+**Important:** The HUSH Node 1.0.9 uses as a data directory `%APPDATA%\Hush` for its wallet and block-chain. 
 If you have a previous version (1.0.8 or lower), the wallet and block-chain for the older version resided in 
 `%APPDATA%\Zdash`. They will thus not be automatically used for the new version but may be copied manually
 for this. It is sufficient to rename (or copy) the old directory `%APPDATA%\Zdash` to `%APPDATA%\Hush` for it

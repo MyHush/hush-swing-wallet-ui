@@ -106,21 +106,38 @@ class AddressBookPanel extends JPanel {
         return table;
     }
 
+    // Check to see if donation address in user's address book is the no-longer-owned-by-team address
+    // NOTE: This didn't seem more reasonable to do anywhere else :\
+    private boolean isAddressBookLineDisownedDonationAddress(final String line) {
+        return line.equals("t1h6kmaQwcuyejDLazT3TNZfV8EEtCzHRhc,HUSH Donation address");
+    }
+
+    private String getUpToDateDonationAddressLine() {
+        return String.format("%s,%s", Constants.HUSH_DONATION_ADDRESS, "HUSH Team Donation address");
+    }
+
     private void loadEntriesFromDisk() throws IOException {
-        final File addressBookFile = new File(OSUtil.getSettingsDirectory(), "addressBook.csv");
+        final File addressBookFile = new File(App.PATH_PROVIDER.getSettingsDirectory(), Constants.WALLET_ADDRESS_BOOK_FILENAME);
         if (!addressBookFile.exists()) {
             return;
         }
         try (final BufferedReader bufferedReader = new BufferedReader(new FileReader(addressBookFile))) {
             do {
-                final String line = bufferedReader.readLine();
-                if (line == null) {
+                final String rawLine = bufferedReader.readLine();
+                if (rawLine == null) {
                     break;
+                }
+                final String line;
+                if (isAddressBookLineDisownedDonationAddress(rawLine)) {
+                    line = getUpToDateDonationAddressLine();
+                    // BRX-TODO: Maybe we should trigger a save after this event occurs?
+                } else {
+                    line = rawLine;
                 }
                 // format is address,name - this way name can contain commas ;-)
                 final int addressEnd = line.indexOf(',');
                 if (addressEnd < 0) {
-                    throw new IOException("Address Book is corrupted!");
+                    throw new IOException("Address book is corrupted!");
                 }
                 final String address = line.substring(0, addressEnd);
                 final String name = line.substring(addressEnd + 1);
@@ -136,7 +153,7 @@ class AddressBookPanel extends JPanel {
     private void saveEntriesToDisk() {
         System.out.println("Saving " + entries.size() + " addresses");
         try {
-            final File addressBookFile = new File(OSUtil.getSettingsDirectory(), "addressBook.csv");
+            final File addressBookFile = new File(App.PATH_PROVIDER.getSettingsDirectory(), Constants.WALLET_ADDRESS_BOOK_FILENAME);
             try (final PrintWriter printWriter = new PrintWriter(new FileWriter(addressBookFile))) {
                 for (final AddressBookEntry entry : entries) {
                     printWriter.println(entry.address + "," + entry.name);
@@ -145,7 +162,7 @@ class AddressBookPanel extends JPanel {
         } catch (IOException bad) {
             // TODO: report error to the user!
             bad.printStackTrace();
-            System.out.println("Saving Address Book Failed!!!!");
+            System.out.println("Saving address book failed!");
         }
     }
 

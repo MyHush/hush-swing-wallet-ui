@@ -6,6 +6,7 @@
 package org.myhush.gui;
 
 import com.eclipsesource.json.*;
+import org.myhush.gui.environment.RuntimeEnvironment;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,53 +17,60 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class HushCommandLineBridge {
     // BRX-TODO: Can be finalized by using Files.exists() below in constructor in place of `new File(...).exists()`
     private File hushcli;
     private File hushd;
 
-    public HushCommandLineBridge(final String installDirPath) throws IOException {
+    public HushCommandLineBridge(final File installDirectory) throws IOException {
         // Detect daemon and client tools installation
-        final File installDir = new File(installDirPath);
-        hushcli = new File(installDir, OSUtil.getHushCli());
-
+        hushcli = new File(installDirectory, RuntimeEnvironment.getHushCliFileName());
         if (!hushcli.exists()) {
-            hushcli = OSUtil.findHushCommand(OSUtil.getHushCli());
-        }
-
-        if ((hushcli == null) || (!hushcli.exists())) {
             throw new IOException(
-                    "The Hush installation directory " + installDirPath + " needs to contain " +
-                            "the command line utilities hushd and hush-cli. hush-cli is missing!");
+                    "The Hush installation directory \"" + installDirectory.getCanonicalPath() + "\" needs" +
+                            "to contain the command line utilities `hushd` and `hush-cli`. `hush-cli` is missing!"
+            );
         }
 
-        hushd = new File(installDir, OSUtil.getHushd());
+        hushd = new File(installDirectory, RuntimeEnvironment.getHushDaemonFileName());
         if (!hushd.exists()) {
-            hushd = OSUtil.findHushCommand(OSUtil.getHushd());
-        }
-
-        if (hushd == null || (!hushd.exists())) {
             throw new IOException(
                     "The HUSH command line utility " + hushcli.getCanonicalPath() +
-                            " was found, but hushd was not found!");
+                            " was found, but `hushd` was not found!");
         }
     }
 
     public synchronized Process startDaemon() throws IOException {
-        final String exportDir = OSUtil.getUserHomeDirectory().getCanonicalPath();
-        final String[] args = new String[]{ hushd.getCanonicalPath(), "-exportdir=" + exportDir };
+        final String dataDirectory = App.PATH_PROVIDER.getBlockchainDirectory().getCanonicalPath();
+        final String[] args = new String[]{
+                hushd.getCanonicalPath(),
+                String.format("-datadir=\"%s\"", dataDirectory),
+                String.format("-exportdir=\"%s\"", dataDirectory)
+        };
         return new CommandExecutor(args).startChildProcess();
     }
 
+    private CommandExecutor getCommandLineExecutor(final String[] args) throws IOException {
+        final String dataDirectory = App.PATH_PROVIDER.getBlockchainDirectory().getCanonicalPath();
+        final String[] processArgs = new String[] {
+                hushcli.getCanonicalPath(),
+                String.format("-datadir=\"%s\"", dataDirectory)
+        };
+        final String[] runnableArgs = Arrays.copyOf(processArgs, processArgs.length + args.length);
+        System.arraycopy(args, 0, runnableArgs, processArgs.length, args.length);
+        return new CommandExecutor(runnableArgs);
+    }
+
     public /*synchronized*/ void stopDaemon() throws IOException, InterruptedException {
-        final String result = new CommandExecutor(new String[]{ hushcli.getCanonicalPath(), "stop" }).execute();
+        final String result = getCommandLineExecutor(new String[]{ "stop" }).execute();
         System.out.println("Stop command issued: " + result);
     }
 
     public synchronized JsonObject getDaemonRawRuntimeInfo()
             throws IOException, InterruptedException, DaemonUnavailableException {
-        final String info = new CommandExecutor(new String[]{ hushcli.getCanonicalPath(), "getinfo" }).execute();
+        final String info = getCommandLineExecutor(new String[]{ "getinfo" }).execute();
 
         if (info.trim().toLowerCase(Locale.ROOT).startsWith("error: couldn't connect to server")) {
             throw new DaemonUnavailableException(info.trim());
@@ -111,13 +119,7 @@ public class HushCommandLineBridge {
 
     public synchronized String[][] getWalletPublicTransactions()
             throws WalletCallException, IOException, InterruptedException {
-        final String notListed;
-        if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
-            notListed = " \u25B6";
-        } else {
-            notListed = "\u26D4";
-        }
-
+        final String notListed = App.SPECIAL_CHARACTER_PROVIDER.getUnlistedAddressSymbol();
         final JsonArray jsonTransactions = executeCommandAndGetJsonArray(
             "listtransactions", wrapStringParameter(""), "100"
         );
@@ -377,7 +379,6 @@ public class HushCommandLineBridge {
         }
 
         final String[] sendCashParameters = new String[]{
-                this.hushcli.getCanonicalPath(),
                 "z_sendmany",
                 wrapStringParameter(from),
                 wrapStringParameter(toManyArrayStr),
@@ -393,7 +394,7 @@ public class HushCommandLineBridge {
         );
 
         // Create caller to send cash
-        final String strResponse = new CommandExecutor(sendCashParameters).execute();
+        final String strResponse = getCommandLineExecutor(sendCashParameters).execute();
 
         if (strResponse.trim().toLowerCase(Locale.ROOT).startsWith("error:") ||
                     strResponse.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
@@ -502,8 +503,7 @@ public class HushCommandLineBridge {
     // error: {"code":-15,"message":"Error: running with an unencrypted wallet, but walletlock was called."}
     public synchronized boolean isWalletEncrypted()
             throws WalletCallException, IOException, InterruptedException {
-        final String[] params = new String[]{ this.hushcli.getCanonicalPath(), "walletlock" };
-        final String strResult = new CommandExecutor(params).execute();
+        final String strResult = getCommandLineExecutor(new String[]{ "walletlock" }).execute();
 
         if (strResult.trim().length() == 0) {
             // If it could be locked with no result - obviously encrypted
@@ -607,11 +607,10 @@ public class HushCommandLineBridge {
             throws WalletCallException, IOException, InterruptedException {
         // First try a Z key
         final String[] params = new String[]{
-            this.hushcli.getCanonicalPath(),
             "z_importkey",
             wrapStringParameter(key)
         };
-        final String result = new CommandExecutor(params).execute();
+        final String result = getCommandLineExecutor(params).execute();
 
         if ((result == null) || (result.trim().length() == 0)) {
             return;
@@ -716,13 +715,13 @@ public class HushCommandLineBridge {
     ) throws WalletCallException, IOException, InterruptedException {
         final String[] params;
         if (command3 != null) {
-            params = new String[]{ this.hushcli.getCanonicalPath(), command1, command2, command3 };
+            params = new String[]{ command1, command2, command3 };
         } else if (command2 != null) {
-            params = new String[]{ this.hushcli.getCanonicalPath(), command1, command2 };
+            params = new String[]{ command1, command2 };
         } else {
-            params = new String[]{ this.hushcli.getCanonicalPath(), command1 };
+            params = new String[]{ command1 };
         }
-        final String result = new CommandExecutor(params).execute();
+        final String result = getCommandLineExecutor(params).execute();
 
         if (result.trim().toLowerCase(Locale.ROOT).startsWith("error:") ||
                     result.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
@@ -734,7 +733,9 @@ public class HushCommandLineBridge {
     // Used to wrap string parameters on the command line - not doing so causes problems on Windows.
     private String wrapStringParameter(String param) {
         // Fix is made for Windows only
-        if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
+        // BRX-TODO: This is the only reason for the `isWindowsRuntime` method laziness
+        // BRX-TODO: Does it not make sense to also quote these parameters on *nix?
+        if (RuntimeEnvironment.isWindowsRuntime()) {
             param = "\"" + param.replace("\"", "\\\"") + "\"";
         }
         return param;

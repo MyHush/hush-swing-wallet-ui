@@ -5,18 +5,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 -->
-<project name="HUSHSwingWalletUI" basedir="../.." default="buildit" xmlns:fx="javafx:com.sun.javafx.tools.ant">
+<project name="HUSHSwingWalletUI" basedir="../.." default="buildit">
     <property name="ext.dir"     value="ext"/>
     <property name="src.dir"     value="src"/>
     <property name="build.dir"   value="build"/>
     <property name="classes.dir" value="${build.dir}/classes"/>
     <property name="jar.dir"     value="${build.dir}/jars"/>
 
-        <!-- props for the app bundler -->
-    <property name="appbundler.jar" value="antlib/appbundler-1.0.jar" />
-    <property name="win.app.dir" value="${build.dir}/winapp" />
-    
-    <property name="main-class"  value="org.myhush.gui.HushWalletFrame"/>
+    <property name="main-class"  value="org.myhush.gui.App"/>
 
     <path id="main-classpath">
         <fileset dir="${build.dir}">
@@ -64,93 +60,9 @@
         </jar>
     </target>
         
-    <target name="copyothers">
-        
-    </target>
-
-<target name="buildit" depends="clean,jar,copyothers">
+    <target name="buildit" depends="clean,jar">
         <!-- Final cleanup -->
         <delete dir="${classes.dir}"/>
     </target>
-
-    <!-- ############################ -->
-    <!-- everything below this is for the win bundler -->
-    <!-- ############################ -->
-    
-    <!-- get a handle on the environment -->
-    <property environment="env" />
-    
-    <!-- fail if JAVA_HOME is not set -->
-    <target name="checkJavaHome">
-        <fail message="JAVA_HOME has to be set!">
-            <condition>
-                <or>
-                    <equals arg1="${env.JAVA_HOME}" arg2="" />
-                    <not>
-                        <isset property="env.JAVA_HOME" />
-                    </not>
-                </or>
-            </condition>
-        </fail>
-    </target>
-    
-    <!-- ############################ -->
-    <!-- Java FX packager -->
-    <!-- ############################ -->
-    
-    <target name="wininst" depends="checkJavaHome,jar">
-        
-        <taskdef resource="com/sun/javafx/tools/ant/antlib.xml"      
-                    uri="javafx:com.sun.javafx.tools.ant"
-                    classpath=".:${env.JAVA_HOME}/lib/ant-javafx.jar"/>
-    
-        <fx:application id="wallet"
-            name="hush" 
-            mainClass="${main-class}"
-            version="1.0.12"/>
-            
-        
-        <fx:resources id="appRes">
-            <fx:fileset type="jar" dir="lib" includes="**/*.jar" />
-        </fx:resources>
-        
-        <fx:jar destfile="${jar.dir}/${ant.project.name}-combined.jar">
-            <fx:application refId="wallet" />
-            <fx:resources refId="appRes" />
-            
-             <fx:fileset dir="${classes.dir}">
-                    <include name="**/*"/>
-             </fx:fileset>
-            
-        </fx:jar>
-        
-        <fx:deploy 
-            nativeBundles="msi"
-            outdir="${win.app.dir}"
-            outfile="${ant.project.name}"
-            verbose="true"
-            >
-                        
-            <fx:application refId="wallet" />
-            
-            <fx:resources>
-                <fx:fileset type="jar" file="${jar.dir}/${ant.project.name}-combined.jar"/>
-                <fx:fileset type="jar" dir="lib" includes="**/*.jar" />
-                <fx:fileset type="data" file="win/first-run.bat" />
-                <fx:fileset type="data" file="win/hushd.exe" />
-                <fx:fileset type="data" file="win/hush-cli.exe" />
-                <fx:fileset type="license" file="win/license.txt" />
-            </fx:resources>
-            
-            <fx:platform>
-                <fx:jvmarg value="-Dhush.location.dir=$APPDIR/Java" />
-                <fx:jvmarg value="-Dlaunching.from.appbundle=true" />
-                <fx:jvmarg value="-Dwallet.name=hush" />
-                <fx:jvmarg value="-Dwallet.version=1.0.12"/>
-            </fx:platform>
-            
-        </fx:deploy>
-    </target>
-
 </project>
 

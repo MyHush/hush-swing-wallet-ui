@@ -11,6 +11,9 @@
 # compiled files
 *.class
 build/**
+package/dl/
+package/tmp/
+package/release-ready/
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/

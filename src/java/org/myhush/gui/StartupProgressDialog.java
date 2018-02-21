@@ -54,21 +54,15 @@ class StartupProgressDialog extends JFrame {
     }
 
     public void waitForStartup() throws Exception {
-        // special handling of Windows app launch
-        if (OSUtil.getOSType() == OSUtil.OS_TYPE.WINDOWS) {
-            final ProvingKeyFetcher keyFetcher = new ProvingKeyFetcher();
-            keyFetcher.fetchIfMissing(this);
-            if ("true".equalsIgnoreCase(System.getProperty("launching.from.appbundle"))) {
-                performWinBundleLaunch();
-            }
-        }
+        final ProvingKeyFetcher keyFetcher = new ProvingKeyFetcher();
+        keyFetcher.fetchIfMissing(this);
 
-        System.out.println("Splash: checking if hushd is already running...");
+        System.out.println("Splash: checking if `hushd` is already running...");
         try {
             cliBridge.getDaemonRawRuntimeInfo();
-            System.out.println("Splash: hushd already running...");
+            System.out.println("Splash: `hushd` already running...");
         } catch (final HushCommandLineBridge.DaemonUnavailableException e) {
-            System.out.println("Splash: hushd will be started...");
+            System.out.println("Splash: `hushd` will be started...");
             final Process daemonProcess = startDaemon();
             scheduleDaemonShutdown(daemonProcess);
         }
@@ -180,21 +174,6 @@ class StartupProgressDialog extends JFrame {
 
     public void setProgressText(final String text) {
         SwingUtilities.invokeLater(() -> progressLabel.setText(text));
-    }
-
-    // BRX-TODO: Remove me, why can't I make `hush.conf` the way other platforms do?
-    private void performWinBundleLaunch() throws IOException, InterruptedException {
-        System.out.println("performing Win Bundle-specific launch");
-        final File programFiles = new File(System.getenv("PROGRAMFILES"));
-        final File bundlePath = new File(programFiles, "hush/app").getCanonicalFile();
-
-        // run "first-run.bat"
-        final File firstRun = new File(bundlePath, "first-run.bat");
-        if (firstRun.exists()) {
-            System.out.println("running script " + firstRun.getCanonicalPath());
-            final Process firstRunProcess = Runtime.getRuntime().exec(firstRun.getCanonicalPath());
-            firstRunProcess.waitFor();
-        }
     }
 
     private class DaemonStartupFailureException extends Exception {
