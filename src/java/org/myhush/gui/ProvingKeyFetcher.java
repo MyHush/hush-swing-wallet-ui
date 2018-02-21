@@ -38,7 +38,7 @@ class ProvingKeyFetcher {
         final MessageDigest sha256;
         try {
             sha256 = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException impossible) {
+        } catch (final NoSuchAlgorithmException impossible) {
             throw new RuntimeException(impossible);
         }
         try (final InputStream is = new BufferedInputStream(new FileInputStream(provingKey))) {
@@ -64,42 +64,35 @@ class ProvingKeyFetcher {
         }
     }
 
-    // BRX-TODO: Automatically move ZcashParams over to HushParams if it exists
+    // BRX-NOTE: We're tied to 'ZcashParams' right now due to the `hushd` treatment of location this:
+    // @see https://github.com/MyHush/hush/blob/12677875f21c165caf481284ddd45356411c149c/src/util.cpp#L479
     private void verifyOrFetch(final StartupProgressDialog parent) throws IOException {
-        final File zCashParams = new File(System.getenv("APPDATA") + "/ZcashParams").getCanonicalFile();
-
-        boolean needsFetch = false;
-        if (!zCashParams.exists()) {
-            needsFetch = true;
-            zCashParams.mkdirs();
+        final File zcashParams = App.PATH_PROVIDER.getZcashParamsDirectory();
+        if (!zcashParams.exists()) {
+            zcashParams.mkdirs();
         }
 
         // verifying key is small, always copy it
-        final File verifyingKeyFile = new File(zCashParams, "sprout-verifying.key");
-        final FileOutputStream fos = new FileOutputStream(verifyingKeyFile);
         {
+            final File verifyingKeyFile = new File(zcashParams, "sprout-verifying.key");
+            final FileOutputStream fos = new FileOutputStream(verifyingKeyFile);
             final InputStream is = ProvingKeyFetcher.class.getClassLoader().getResourceAsStream("keys/sprout-verifying.key");
             copy(is, fos);
             fos.close();
         }
 
-        final File provingKeyFile = new File(zCashParams, "sprout-proving.key").getCanonicalFile();
-        if (!provingKeyFile.exists()) {
-            needsFetch = true;
-        } else if (provingKeyFile.length() != PROVING_KEY_SIZE) {
-            needsFetch = true;
-        }
-        /*
-         * We skip proving key verification every start - this is impractical.
-         * If the proving key exists and is the correct size, then it should be OK.
-        else {
-            parent.setProgressText("Verifying proving key...");
-            needsFetch = !checkSHA256(provingKeyFile,parent);
-        }*/
-
-        if (!needsFetch) {
+        final File provingKeyFile = new File(zcashParams, "sprout-proving.key");
+        if (provingKeyFile.exists() && provingKeyFile.length() == PROVING_KEY_SIZE) {
+            /*
+            * We skip proving key verification every start - this is impractical.
+            * If the proving key exists and is the correct size, then it should be OK.
+            *
+            *   parent.setProgressText("Verifying proving key...");
+            *   needsFetch = !checkSHA256(provingKeyFile, parent);
+            */
             return;
         }
+
         JOptionPane.showMessageDialog(
                 parent,
                 "The wallet needs to download the Z cryptographic proving key (approx. 900 MB).\n" +

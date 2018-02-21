@@ -2,7 +2,7 @@
 
 This application provides a Graphical User Interface (GUI) for the [HUSH](https://myhush.org/) (formerly Zdash) client tools that acts as a wrapper and presents the information in a more user-friendly manner.
 
-![Screenshot](docs/HUSHWallet.png "Main Window")
+![Screenshot](docs/HUSHSwingWalletUIWin.png "Main Window")
 
 
 ## Building, installing and running the Wallet GUI
@@ -110,8 +110,9 @@ A workaround is to change the [locale settings](https://windows.lbl.gov/software
 2. Limitation: Wallet encryption has been temporarily disabled in all ZCash forks due to stability problems. A corresponding issue 
 [#1552](https://github.com/zcash/zcash/issues/1552) has been opened by the ZCash developers. Correspondingly
 wallet encryption has been temporarily disabled in the Hush Desktop GUI Wallet.
-3. Issue: the GUI wallet does not work correctly if hushd is started with a custom data directory, like:
-`hushd -datadir=/home/data/whatever` This will be fixed in later versions.
+3. Issue: the GUI wallet does not work correctly if hushd is started manually with a custom data directory, like:
+`hushd -datadir=/home/data/whatever`. This will be fixed in later versions. In the mean time,  you can configure the `hushd`
+data (blockchain) folder, as well as the Swing wallet's settings folder via Java runtime options `data.directory` and `settings.directory`.
 4. Issue: GUI data tables (transactions/addresses etc.) allow copying of data via double click but also allow editing. 
 The latter needs to be disabled. 
 5. Limitation: The list of transactions does not show all outgoing ones (specifically outgoing Z address 

@@ -1,1 +1,0 @@
-hushd.exe -reindex

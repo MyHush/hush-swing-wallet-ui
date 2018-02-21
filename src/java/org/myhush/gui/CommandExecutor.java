@@ -12,10 +12,10 @@ import java.io.InputStreamReader;
 /**
  * Executes a command and returns the result.
  */
-class CommandExecutor {
+public class CommandExecutor {
     private final String[] args;
 
-    CommandExecutor(final String args[]) {
+    public CommandExecutor(final String args[]) {
         this.args = args;
     }
 

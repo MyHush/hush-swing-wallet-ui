@@ -103,6 +103,9 @@ class WalletOperations {
         }
     }
 
+    private File getDefaultDirectory() {
+        return new File(System.getProperty("user.home"));
+    }
 
     public void backupWallet() {
         try {
@@ -111,7 +114,7 @@ class WalletOperations {
             final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Backup wallet to file...");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setCurrentDirectory(OSUtil.getUserHomeDirectory());
+            fileChooser.setCurrentDirectory(getDefaultDirectory());
 
             if (fileChooser.showSaveDialog(this.parent) != JFileChooser.APPROVE_OPTION) {
                 return;
@@ -158,7 +161,7 @@ class WalletOperations {
             final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Export wallet private keys to file...");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setCurrentDirectory(OSUtil.getUserHomeDirectory());
+            fileChooser.setCurrentDirectory(getDefaultDirectory());
 
             if (fileChooser.showSaveDialog(this.parent) != JFileChooser.APPROVE_OPTION) {
                 return;
@@ -330,8 +333,7 @@ class WalletOperations {
 
 
     private void issueBackupDirectoryWarning() throws IOException {
-        final String userDirPath = OSUtil.getSettingsDirectory();
-        final File warningFlagFile = new File(userDirPath + File.separator + "backupInfoShown.flag");
+        final File warningFlagFile = new File(App.PATH_PROVIDER.getSettingsDirectory(), "backupInfoShown.flag");
         if (warningFlagFile.exists()) {
             return;
         } else {
@@ -343,7 +345,7 @@ class WalletOperations {
                 "the hushd parameter -exportdir=<dir> has been set. If you started hushd\n" +
                 "manually, you ought to have provided this parameter. When hushd is started\n" +
                 "automatically by the GUI wallet the directory provided as parameter to -exportdir\n" +
-                "is the user home directory: " + OSUtil.getUserHomeDirectory().getCanonicalPath() + "\n" +
+                "is the user home directory: " + getDefaultDirectory().getCanonicalPath() + "\n" +
                 "Please navigate to the directory provided as -exportdir=<dir> and select a\n" +
                 "filename in it to backup/export private keys. If you select another directory\n" +
                 "instead, the destination file will still end up in the directory provided as \n" +

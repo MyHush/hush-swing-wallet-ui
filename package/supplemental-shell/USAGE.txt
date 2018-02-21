@@ -1,0 +1,10 @@
+To run the HUSH Swing GUI Wallet, you must have Java 1.8+ installed.
+
+To launch, do one of the following:
+1. Click on the `HUSHSwingWalletUI.jar` file directly if your system supports this method of execution
+2. Click on `run.sh`, which does the following option for you
+3. In a terminal, from the current directory, type: `java -jar HUSHSwingWalletUI.jar`
+
+NOTE: Due to the build process of this application, some systems may have inconsistent file permissions,
+primarily highlighting cases where the execution bit is disabled. You can enable this on `HUSHSwingWalletUI.jar`
+and `run.sh` via the terminal with the following: `chmod u+x HUSHSwingWallet.jar run.sh`.

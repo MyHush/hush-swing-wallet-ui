@@ -5,8 +5,10 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 package org.myhush.gui;
 
-import org.myhush.gui.HushDaemonObserver.DAEMON_STATUS;
-import org.myhush.gui.HushDaemonObserver.DaemonInfo;
+import org.myhush.gui.environment.RuntimeEnvironment;
+import org.myhush.gui.environment.system.DaemonInfo;
+import org.myhush.gui.environment.system.DaemonInfoProvider;
+import org.myhush.gui.environment.system.DaemonState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,13 +16,12 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
 class DashboardPanel extends WalletTabPanel {
     private final JFrame parentFrame;
-    private final HushDaemonObserver installationObserver;
+    private final DaemonInfoProvider daemonInfoProvider;
     private final HushCommandLineBridge cliBridge;
     private final StatusUpdateErrorReporter errorReporter;
 
@@ -42,12 +43,12 @@ class DashboardPanel extends WalletTabPanel {
     private final DataGatheringThread<String[][]> transactionGatheringThread;
 
     DashboardPanel(final JFrame parentFrame,
-                   final HushDaemonObserver installationObserver,
+                   final DaemonInfoProvider daemonInfoProvider,
                    final HushCommandLineBridge cliBridge,
                    final StatusUpdateErrorReporter errorReporter
     ) throws IOException, InterruptedException, HushCommandLineBridge.WalletCallException {
         this.parentFrame = parentFrame;
-        this.installationObserver = installationObserver;
+        this.daemonInfoProvider = daemonInfoProvider;
         this.cliBridge = cliBridge;
         this.errorReporter = errorReporter;
 
@@ -104,7 +105,7 @@ class DashboardPanel extends WalletTabPanel {
         this.daemonInfoGatheringThread = new DataGatheringThread<>(
             () -> {
                 final long start = System.currentTimeMillis();
-                final DaemonInfo daemonInfo = DashboardPanel.this.installationObserver.getDaemonInfo();
+                final DaemonInfo daemonInfo = DashboardPanel.this.daemonInfoProvider.getDaemonInfo();
                 final long end = System.currentTimeMillis();
                 System.out.println("Gathering of dashboard daemon status data done in " + (end - start) + "ms.");
                 return daemonInfo;
@@ -228,7 +229,7 @@ class DashboardPanel extends WalletTabPanel {
 
         final String daemonStatus;
         final String runtimeInfo;
-        if (daemonInfo.status == DAEMON_STATUS.RUNNING) {
+        if (daemonInfo.status == DaemonState.RUNNING) {
             daemonStatus = "<span style=\"color:green;font-weight:bold\">RUNNING</span>";
             runtimeInfo = "<span style=\"font-size:8px\">" +
                           "Resident: " + daemonInfo.residentSizeMB + " MB" + virtual + cpuPercentage +
@@ -238,11 +239,10 @@ class DashboardPanel extends WalletTabPanel {
             runtimeInfo = "";
         }
 
-        // TODO: what if Hush directory is non-default...
-        final File walletDAT = new File(OSUtil.getBlockchainDirectory() + "/wallet.dat");
+        final File walletDAT = new File(App.PATH_PROVIDER.getBlockchainDirectory(), "wallet.dat");
 
         if (this.OSInfo == null) {
-            this.OSInfo = OSUtil.getSystemInfo();
+            this.OSInfo = RuntimeEnvironment.getSystemInfo();
         }
 
         // TODO: Use a one-off data gathering thread - better design
@@ -251,13 +251,13 @@ class DashboardPanel extends WalletTabPanel {
 
         this.daemonStatusLabel.setText(
             "<html>" +
-            "<span style=\"font-weight:bold;color:#303030\">hushd</span> status: " +daemonStatus + ",  " + runtimeInfo + " <br/>" +
-            "Wallet: <span style=\"font-weight:bold;color:#303030\">" + walletDAT.getCanonicalPath() + "</span>" + walletEncryption + " <br/> " +
+            "<span style=\"font-weight:bold;color:#303030\">hushd</span> status: " +daemonStatus + ",  " + runtimeInfo + "<br/>" +
+            "Wallet: <span style=\"font-weight:bold;color:#303030\">" + walletDAT.getCanonicalPath() + "</span>" + walletEncryption + "<br/>" +
             "<span style=\"font-size:3px\"><br/></span>" + // BRX-TODO: ??? tiny newline?
             "<span style=\"font-size:8px\">" +
-            "Installation: " + OSUtil.getProgramDirectory() + ", " +
-            "Blockchain: " + OSUtil.getBlockchainDirectory() + " <br/> " +
-            "System: " + this.OSInfo + " </span> </html>"
+            "Installation: " + App.PATH_PROVIDER.getProgramDirectory().getCanonicalPath() + ", " +
+            "Blockchain: " + App.PATH_PROVIDER.getBlockchainDirectory().getCanonicalPath() + "<br/>" +
+            "System: " + this.OSInfo + "</span></html>"
         );
     }
 
@@ -297,21 +297,11 @@ class DashboardPanel extends WalletTabPanel {
             info.lastBlockDate = startDate;
         }
 
-        final String connections;
-        final String tickSymbol;
-        final OSUtil.OS_TYPE os = OSUtil.getOSType();
-        // Handling special symbols on Mac OS/Windows
-        // TODO: isolate OS-specific symbol stuff in separate code
-        if ((os == OSUtil.OS_TYPE.MAC_OS) || (os == OSUtil.OS_TYPE.WINDOWS)) {
-            connections = " \u21D4";
-            tickSymbol = " \u2606";
-        } else {
-            connections = " \u26D7";
-            tickSymbol = " \u2705";
-        }
+        final String connections = App.SPECIAL_CHARACTER_PROVIDER.getConnectionSymbol();
+        final String tickSymbol = App.SPECIAL_CHARACTER_PROVIDER.getTickSymbol();
 
         final String tick = percentage.equals("100") ?
-            "<span style=\"font-weight:bold;font-size:12px;color:green\">" + tickSymbol + "</span>" : "";
+            "<span style=\"font-weight:bold;font-size:12px;color:green\"> " + tickSymbol + "</span>" : "";
 
         final String netColor;
         if (info.numConnections > 6) {
@@ -329,7 +319,7 @@ class DashboardPanel extends WalletTabPanel {
             "Up to: <span style=\"font-size:8px;font-weight:bold\">" + info.lastBlockDate.toLocaleString() + "</span>  <br/> " +
             "<span style=\"font-size:1px\"><br/></span>" +
             "Network: <span style=\"font-weight:bold\">" + info.numConnections + " connections</span>" +
-            "<span style=\"font-size:16px;color:" + netColor + "\">" + connections + "</span>"
+            "<span style=\"font-size:16px;color:" + netColor + "\"> " + connections + "</span>"
         );
     }
 
@@ -453,19 +443,8 @@ class DashboardPanel extends WalletTabPanel {
 
 
         // Confirmation symbols
-        final String confirmed;
-        final String notConfirmed;
-
-        // Windows does not support the flag symbol (Windows 7 by default)
-        // TODO: isolate OS-specific symbol codes in a separate class
-        OSUtil.OS_TYPE os = OSUtil.getOSType();
-        if (OSUtil.getOSType() != OSUtil.OS_TYPE.WINDOWS) {
-            confirmed = "\u2690";
-            notConfirmed = "\u2691";
-        } else { // Windows snowflake
-            confirmed = " \u25B7";
-            notConfirmed = " \u25B6";
-        }
+        final String confirmed = App.SPECIAL_CHARACTER_PROVIDER.getConfirmedBalanceSymbol();
+        final String notConfirmed = App.SPECIAL_CHARACTER_PROVIDER.getUnconfirmedBalanceSymbol();
 
         final DecimalFormat decimalFormat = new DecimalFormat("########0.00######");
 
