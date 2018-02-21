@@ -46,8 +46,8 @@ public class HushCommandLineBridge {
         final String dataDirectory = App.PATH_PROVIDER.getBlockchainDirectory().getCanonicalPath();
         final String[] args = new String[]{
                 hushd.getCanonicalPath(),
-                String.format("-datadir=\"%s\"", dataDirectory),
-                String.format("-exportdir=\"%s\"", dataDirectory)
+                wrapStringParameter(String.format("-datadir=%s", dataDirectory)),
+                wrapStringParameter(String.format("-exportdir=%s", dataDirectory))
         };
         return new CommandExecutor(args).startChildProcess();
     }
@@ -56,7 +56,7 @@ public class HushCommandLineBridge {
         final String dataDirectory = App.PATH_PROVIDER.getBlockchainDirectory().getCanonicalPath();
         final String[] processArgs = new String[] {
                 hushcli.getCanonicalPath(),
-                String.format("-datadir=\"%s\"", dataDirectory)
+                wrapStringParameter(String.format("-datadir=%s", dataDirectory)),
         };
         final String[] runnableArgs = Arrays.copyOf(processArgs, processArgs.length + args.length);
         System.arraycopy(args, 0, runnableArgs, processArgs.length, args.length);
