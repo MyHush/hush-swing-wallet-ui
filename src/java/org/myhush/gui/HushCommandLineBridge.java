@@ -390,7 +390,7 @@ public class HushCommandLineBridge {
             "The following send command will be issued: " +
             sendCashParameters[0] + " " + sendCashParameters[1] + " " +
             sendCashParameters[2] + " " + sendCashParameters[3] + " " +
-            sendCashParameters[4] + " " + sendCashParameters[5] + "."
+            sendCashParameters[4] + "."
         );
 
         // Create caller to send cash
@@ -405,7 +405,7 @@ public class HushCommandLineBridge {
             "Sending cash with the following command: " +
             sendCashParameters[0] + " " + sendCashParameters[1] + " " +
             sendCashParameters[2] + " " + sendCashParameters[3] + " " +
-            sendCashParameters[4] + " " + sendCashParameters[5] + "." +
+            sendCashParameters[4] + "." +
             " Got result: [" + strResponse + "]"
         );
         return strResponse.trim();
