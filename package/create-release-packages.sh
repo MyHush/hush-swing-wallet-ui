@@ -71,7 +71,8 @@ download_and_verify_hush_package() {
 windows_binaries_package="bin-windows-x64.zip"
 download_and_verify_hush_package "${windows_binaries_package}"
 
-# TODO: download and verify Mac binaries (not available yet)
+macos_binaries_package="bin-macosx-x64.zip"
+download_and_verify_hush_package "${macos_binaries_package}"
 
 linux_binaries_package="bin-linux-x64.tar.gz"
 download_and_verify_hush_package "${linux_binaries_package}"
@@ -139,6 +140,21 @@ cd "${PROJECT_ROOT}"
 sha256sum "${release_directory_path}/${windows_full_release_package_name}.zip" > "${release_directory_path}/${windows_full_release_package_name}.zip.sha256"
 
 
+## Prepare Mac OS non-bundled zip release
+macos_release_package_name="hush-swing-${jar_release_verison}-hush-${hush_binary_release_version}-macosx-x64"
+mkdir "${temporary_directory_path}/${macos_release_package_name}"
+unzip "${download_directory_path}/${macos_binaries_package}" -d "${temporary_directory_path}/${macos_release_package_name}"
+cp "package/supplemental-shell/run.sh" "${temporary_directory_path}/${macos_release_package_name}/"
+cp "package/supplemental-shell/USAGE.txt" "${temporary_directory_path}/${macos_release_package_name}/USAGE.txt"
+cp "${build_output_jars_path}/${jar_file_name}" "${temporary_directory_path}/${macos_release_package_name}/"
+cp LICENSE "${temporary_directory_path}/${macos_release_package_name}/LICENSE.txt"
+
+cd "${temporary_directory_path}/${macos_release_package_name}"
+zip -9r "${PROJECT_ROOT}/${release_directory_path}/${macos_release_package_name}.zip" *
+cd "${PROJECT_ROOT}"
+sha256sum "${release_directory_path}/${macos_release_package_name}.zip" > "${release_directory_path}/${macos_release_package_name}.zip.sha256"
+
+
 ## Prepare Linux non-bundled zip release
 linux_release_package_name="hush-swing-${jar_release_verison}-hush-${hush_binary_release_version}-linux-x64"
 mkdir "${temporary_directory_path}/${linux_release_package_name}"
@@ -152,8 +168,6 @@ cd "${temporary_directory_path}/${linux_release_package_name}"
 tar -czvf "${PROJECT_ROOT}/${release_directory_path}/${linux_release_package_name}.tar.gz" *
 cd "${PROJECT_ROOT}"
 sha256sum "${release_directory_path}/${linux_release_package_name}.tar.gz" > "${release_directory_path}/${linux_release_package_name}.tar.gz.sha256"
-
-# TODO: Add readme to each archive (customized per platform)
 
 # All done
 cleanup
