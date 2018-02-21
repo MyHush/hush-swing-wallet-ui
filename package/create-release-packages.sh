@@ -12,7 +12,7 @@
 # editor.
 #
 SCRIPT=`realpath $0`
-SCRIPT_PATH=`dirname $SCRIPT`
+SCRIPT_PATH=`dirname "${SCRIPT}"`
 PROJECT_ROOT="${SCRIPT_PATH}/.."
 cd "${PROJECT_ROOT}"
 
