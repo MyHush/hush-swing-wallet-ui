@@ -11,13 +11,14 @@ import org.myhush.gui.environment.system.DaemonInfoProvider;
 import org.myhush.gui.environment.system.DaemonState;
 
 import javax.swing.*;
+import javax.swing.Timer;
+import java.util.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.List;
 
 class DashboardPanel extends WalletTabPanel {
     private final JFrame parentFrame;
@@ -412,21 +413,12 @@ class DashboardPanel extends WalletTabPanel {
         final String[][] publicTransactions = this.cliBridge.getWalletPublicTransactions();
         final String[][] zReceivedTransactions = this.cliBridge.getWalletZReceivedTransactions();
 
-        // BRX-TODO: Same comments here re. preallocated arrays vs. Lists and needing this counter
-        final String[][] allTransactions = new String[publicTransactions.length + zReceivedTransactions.length][];
-
-        int i = 0;
-
-        for (final String[] t : publicTransactions) {
-            allTransactions[i++] = t;
-        }
-        for (final String[] t : zReceivedTransactions) {
-            allTransactions[i++] = t;
-        }
+        final List<String[]> transactions = new ArrayList<>();
+        transactions.addAll(Arrays.asList(publicTransactions));
+        transactions.addAll(Arrays.asList(zReceivedTransactions));
 
         // Sort transactions by date
-        Arrays.sort(allTransactions, (a, b) -> {
-            // BRX-TODO: Can't we just compare a[4] vs b[4] since they're numbers?
+        Collections.sort(transactions, (a, b) -> {
             final Date aDate = new Date(
                 a[4].equals("N/A") ? 0 : Long.valueOf(a[4]) * 1000L
             );
@@ -449,44 +441,44 @@ class DashboardPanel extends WalletTabPanel {
         final DecimalFormat decimalFormat = new DecimalFormat("########0.00######");
 
         // Change the direction and date etc. attributes for presentation purposes
-        for (final String[] trans : allTransactions) {
+        for (final String[] transaction : transactions) {
             // Direction
-            switch (trans[1]) {
+            switch (transaction[1]) {
                 case "receive":
-                    trans[1] = "\u21E8 IN";
+                    transaction[1] = "\u21E8 IN";
                     break;
                 case "send":
-                    trans[1] = "\u21E6 OUT";
+                    transaction[1] = "\u21E6 OUT";
                     break;
                 case "generate":
-                    trans[1] = "\u2692\u2699 MINED";
+                    transaction[1] = "\u2692\u2699 MINED";
                     break;
                 case "immature":
-                    trans[1] = "\u2696 Immature";
+                    transaction[1] = "\u2696 Immature";
                     break;
             }
 
             // Date
-            if (!trans[4].equals("N/A")) {
-                trans[4] = new Date(Long.valueOf(trans[4]) * 1000L).toLocaleString();
+            if (!transaction[4].equals("N/A")) {
+                transaction[4] = new Date(Long.valueOf(transaction[4]) * 1000L).toLocaleString();
             }
 
             // Amount
             try {
-                final double amount = Math.abs(Double.valueOf(trans[3]));
-                trans[3] = decimalFormat.format(amount);
+                final double amount = Math.abs(Double.valueOf(transaction[3]));
+                transaction[3] = decimalFormat.format(amount);
             } catch (final NumberFormatException e) {
-                System.out.println("Error occurred while formatting amount: " + trans[3] + " - " + e.getMessage() + "!");
+                System.out.println("Error occurred while formatting amount: " + transaction[3] + " - " + e.getMessage() + "!");
             }
 
             // Confirmed?
             try {
-                final boolean isConfirmed = !trans[2].trim().equals("0");
-                trans[2] = isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed);
+                final boolean isConfirmed = !transaction[2].trim().equals("0");
+                transaction[2] = isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed);
             } catch (final NumberFormatException e) {
-                System.out.println("Error occurred while formatting confirmations: " + trans[2] + " - " + e.getMessage() + "!");
+                System.out.println("Error occurred while formatting confirmations: " + transaction[2] + " - " + e.getMessage() + "!");
             }
         }
-        return allTransactions;
+        return (String[][])transactions.toArray();
     }
 }

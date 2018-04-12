@@ -20,11 +20,13 @@ public class WindowsDaemonInfoProvider extends DaemonInfoProvider {
 
         final String hushDaemonFileName = RuntimeEnvironment.getHushDaemonFileName();
         final String tasklist = new CommandExecutor(new String[]{ "tasklist" }).execute();
-        // BRX-TODO: Same comment here re. LineNumberReader as elsewhere
-        final LineNumberReader lnr = new LineNumberReader(new StringReader(tasklist));
+        final LineNumberReader lineReader = new LineNumberReader(new StringReader(tasklist));
 
-        String line;
-        while ((line = lnr.readLine()) != null) {
+        do {
+            final String line = lineReader.readLine();
+            if (line == null) {
+                break;
+            }
             final StringTokenizer stringTokenizer = new StringTokenizer(line, " \t", false);
             boolean foundHush = false;
             final StringBuilder size = new StringBuilder();
@@ -59,7 +61,7 @@ public class WindowsDaemonInfoProvider extends DaemonInfoProvider {
                 }
                 break;
             }
-        }
+        } while (true);
 
         if (info.status != DaemonState.RUNNING) {
             info.cpuPercentage = 0;

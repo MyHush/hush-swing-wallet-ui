@@ -20,9 +20,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class HushCommandLineBridge {
-    // BRX-TODO: Can be finalized by using Files.exists() below in constructor in place of `new File(...).exists()`
-    private File hushcli;
-    private File hushd;
+    private final File hushcli;
+    private final File hushd;
 
     public HushCommandLineBridge(final File installDirectory) throws IOException {
         // Detect daemon and client tools installation

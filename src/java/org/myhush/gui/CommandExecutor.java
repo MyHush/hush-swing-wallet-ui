@@ -42,7 +42,7 @@ public class CommandExecutor {
                         }
                         result.append((char) c);
                     } while (true);
-                } catch (IOException ioe) {
+                } catch (final IOException ioe) {
                     // TODO: log or handle the exception
                 }
             }
@@ -59,7 +59,7 @@ public class CommandExecutor {
                         }
                         result.append((char) c);
                     } while (true);
-                } catch (IOException ioe) {
+                } catch (final IOException ioe) {
                     // TODO: log or handle the exception
                 }
             }

@@ -159,7 +159,7 @@ class AddressBookPanel extends JPanel {
                     printWriter.println(entry.address + "," + entry.name);
                 }
             }
-        } catch (IOException bad) {
+        } catch (final IOException bad) {
             // TODO: report error to the user!
             bad.printStackTrace();
             System.out.println("Saving address book failed!");
@@ -225,7 +225,7 @@ class AddressBookPanel extends JPanel {
             final String address =
                 (String) JOptionPane.showInputDialog(
                     AddressBookPanel.this,
-                    "Pleae enter the t-address or z-address of " + name,
+                    "Please enter the t-address or z-address of " + name,
                     "Add new contact step 2",
                     JOptionPane.PLAIN_MESSAGE,
                     null,

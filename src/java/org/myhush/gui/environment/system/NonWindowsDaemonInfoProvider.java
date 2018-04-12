@@ -60,11 +60,10 @@ public class NonWindowsDaemonInfoProvider extends DaemonInfoProvider {
 
         final String hushDaemonFileName = RuntimeEnvironment.getHushDaemonFileName();
         final String psAuxResult = new CommandExecutor(new String[]{ "ps", "auxwww" }).execute();
-        // BRX-TODO: Noted `LineNumberReader` used here and elsewhere, but not referring to any line numbers...
-        final LineNumberReader lnr = new LineNumberReader(new StringReader(psAuxResult));
+        final LineNumberReader lineReader = new LineNumberReader(new StringReader(psAuxResult));
 
         do {
-            final String line = lnr.readLine();
+            final String line = lineReader.readLine();
             if (line == null) {
                 break;
             }
