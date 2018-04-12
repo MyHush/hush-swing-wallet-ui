@@ -220,6 +220,7 @@ class AddressesPanel extends WalletTabPanel {
     private JTable createAddressBalanceTable(final String rowData[][]) {
         final String columnNames[] = { "Balance", "Confirmed?", "Address" };
         final JTable table = new AddressTable(rowData, columnNames, this.cliBridge);
+        table.setDefaultEditor(Object.class, null);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         table.getColumnModel().getColumn(0).setPreferredWidth(160);
         table.getColumnModel().getColumn(1).setPreferredWidth(140);

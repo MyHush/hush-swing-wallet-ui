@@ -174,6 +174,7 @@ class TransactionTable extends DataTable {
             });
 
             final DataTable table = new DataTable(data, columns);
+            table.setDefaultEditor(Object.class, null);
             table.getColumnModel().getColumn(0).setPreferredWidth(200);
             table.getColumnModel().getColumn(1).setPreferredWidth(maxPreferredWidth);
             table.setAutoResizeMode(AUTO_RESIZE_OFF);
