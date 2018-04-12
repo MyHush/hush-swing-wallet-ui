@@ -76,8 +76,8 @@ class StartupProgressDialog extends JFrame {
      * @throws InterruptedException
      * @throws DaemonStartupFailureException Upon failing to start the daemon in a timely manner
      */
-    private Process startDaemon() throws IOException, InterruptedException, DaemonStartupFailureException {
-        final Process daemonProcess = cliBridge.startDaemon();
+    private Process startDaemon(boolean performReindex) throws IOException, InterruptedException, DaemonStartupFailureException {
+        final Process daemonProcess = cliBridge.startDaemon(performReindex);
 
         final String loadingMessage = "Waiting for daemon to start...";
         setProgressText(loadingMessage);
@@ -92,6 +92,19 @@ class StartupProgressDialog extends JFrame {
             try {
                 daemonInfo = cliBridge.getDaemonRawRuntimeInfo();
             } catch (final HushCommandLineBridge.DaemonUnavailableException e) {
+                if (e.getReason() == HushCommandLineBridge.DaemonUnavailableException.Reason.START_FAILURE_REINDEX) {
+                    final int dialogResult = JOptionPane.showConfirmDialog(
+                            null,
+                            "Daemon has encountered an error loading the block index during startup, do you want to reindex?",
+                            "Warning",
+                            JOptionPane.YES_NO_OPTION
+                    );
+                    if (dialogResult != JOptionPane.YES_OPTION) {
+                        throw new DaemonStartupFailureException("Unable to start hushd daemon");
+                    } else {
+                        return startDaemon(true);
+                    }
+                }
                 setProgressText(loadingMessage + " (" + (iterationLimit - iteration) + ")");
 
                 // wait iterationLimit * POLL_PERIOD_MS intervals before asking user what they want to do
@@ -116,6 +129,10 @@ class StartupProgressDialog extends JFrame {
         } while (true);
 
         return daemonProcess;
+    }
+
+    private Process startDaemon() throws IOException, InterruptedException, DaemonStartupFailureException {
+        return startDaemon(false);
     }
 
     /**
