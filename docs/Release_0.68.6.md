@@ -95,7 +95,5 @@ when running the GUI wallet using certain ATI video drivers/cards. If such a pro
 user may run `HUSHSwingWalletUI.jar` instead of `HUSHSwingWalletUI.exe`. This JAR file will be runnable 
 only if there is a Java JDK installed separately on the system. To install JDK 8 for Windows you may use 
 this [good tutorial](http://www.wikihow.com/Install-the-Java-Software-Development-Kit)
-1. Issue: GUI data tables (transactions/addresses etc.) allow copying of data via double click but also allow editing. 
-The latter needs to be disabled. 
 1. Limitation: The list of transactions does not show all outgoing ones (specifically outgoing Z address 
 transactions).  

@@ -13,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.List;
 
 /**
  * Addresses panel - shows T/Z addresses and their balances.
@@ -220,6 +221,7 @@ class AddressesPanel extends WalletTabPanel {
     private JTable createAddressBalanceTable(final String rowData[][]) {
         final String columnNames[] = { "Balance", "Confirmed?", "Address" };
         final JTable table = new AddressTable(rowData, columnNames, this.cliBridge);
+        table.setDefaultEditor(Object.class, null);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         table.getColumnModel().getColumn(0).setPreferredWidth(160);
         table.getColumnModel().getColumn(1).setPreferredWidth(140);
@@ -228,46 +230,53 @@ class AddressesPanel extends WalletTabPanel {
         return table;
     }
 
+    private static final String CONFIRMED_SPECIAL_CHAR  = App.SPECIAL_CHARACTER_PROVIDER.getConfirmedBalanceSymbol();
+    private static final String UNCONFIRMED_SPECIAL_CHAR = App.SPECIAL_CHARACTER_PROVIDER.getUnconfirmedBalanceSymbol();
+    // Format double numbers - else sometimes we get exponential notation 1E-4 ZEC
+    private static final DecimalFormat BALANCE_FORMATTER = new DecimalFormat("########0.00######");
+
+    private String[] getAddressBalanceDisplayData(final String address, boolean watchOnlyOrInvalid)
+            throws InterruptedException, HushCommandLineBridge.WalletCallException, IOException
+    {
+        final String addressToDisplay;
+        if (watchOnlyOrInvalid) {
+            System.out.println(String.format("The following address is invalid or a watch-only address: %s. It will not be displayed!", address));
+            addressToDisplay = "<INVALID OR WATCH-ONLY ADDRESS> !!!";
+        } else {
+            addressToDisplay = address;
+        }
+
+        final String confirmedBalance = cliBridge.getBalanceForAddress(address);
+        final String unconfirmedBalance = cliBridge.getUnconfirmedBalanceForAddress(address);
+        final boolean isConfirmed = confirmedBalance.equals(unconfirmedBalance);
+        final String balanceToShow = BALANCE_FORMATTER.format(Double.valueOf(isConfirmed ? confirmedBalance : unconfirmedBalance));
+
+        return new String[]{
+                balanceToShow,
+                isConfirmed ? ("Yes  " + CONFIRMED_SPECIAL_CHAR) : ("No  " + UNCONFIRMED_SPECIAL_CHAR),
+                addressToDisplay
+        };
+    }
 
     private String[][] getAddressBalanceDataFromWallet()
-            throws HushCommandLineBridge.WalletCallException, IOException, InterruptedException {
+            throws HushCommandLineBridge.WalletCallException, IOException, InterruptedException
+    {
         // Z Addresses - they are OK
         final String[] zAddresses = cliBridge.getWalletZAddresses();
 
-        // BRX-TODO: At a glance, this doesn't look like it makes sense -- why are we copying arrays
-        // BRX-TODO: then merging them?
-
         // T Addresses listed with the list received by addr comamnd
-        final String[] tAddresses = this.cliBridge.getWalletAllPublicAddresses();
-        final Set<String> tStoredAddressSet = new HashSet<>();
-        Collections.addAll(tStoredAddressSet, tAddresses);
+        final String[] tAddresses = cliBridge.getWalletAllPublicAddresses();
 
         // T addresses with unspent outputs - just in case they are different
-        final String[] tAddressesWithUnspentOuts = this.cliBridge.getWalletPublicAddressesWithUnspentOutputs();
-        final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
-        Collections.addAll(tAddressSetWithUnspentOuts, tAddressesWithUnspentOuts);
+        final String[] tAddressesWithUnspentOuts = cliBridge.getWalletPublicAddressesWithUnspentOutputs();
 
-        // Combine all known T addresses
-        final Set<String> tAddressesCombined = new HashSet<>();
-        tAddressesCombined.addAll(tStoredAddressSet);
-        tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
+        // Store all known T addresses
+        final List<String> tAddressesCombined = new ArrayList<>(Arrays.asList(tAddresses));
+        tAddressesCombined.addAll(Arrays.asList(tAddressesWithUnspentOuts));
 
-        // BRX-TODO: Rather than need this strange counter `i` below, move this to a List of Lists (or an array of Lists)
-        // BRX-TODO: and just append, we can return whatever structures we prefer
-        final String[][] addressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
-
-        // Format double numbers - else sometimes we get exponential notation 1E-4 ZEC
-        final DecimalFormat df = new DecimalFormat("########0.00######");
-
-        final String confirmed = App.SPECIAL_CHARACTER_PROVIDER.getConfirmedBalanceSymbol();
-        final String notConfirmed = App.SPECIAL_CHARACTER_PROVIDER.getUnconfirmedBalanceSymbol();
-
-        int i = 0;
+        final List<String[]> addressBalances = new ArrayList<>();
 
         for (final String address : tAddressesCombined) {
-            // BRX-TODO: Just don't add invalid addresses? (after changing structure above to Lists)
-            String addressToDisplay = address;
-
             // Make sure the current address is not watch-only or invalid
             if (!this.validationMap.containsKey(address)) {
                 final boolean validationResult = this.cliBridge.isWatchOnlyOrInvalidAddress(address);
@@ -286,38 +295,15 @@ class AddressesPanel extends WalletTabPanel {
                 }
             }
 
+            // BRX-TODO: Maybe just don't add invalid addresses?
             final boolean watchOnlyOrInvalid = this.validationMap.get(address);
-            if (watchOnlyOrInvalid) {
-                System.out.println("The following address is invalid or a watch-only address: {0}. It will not be displayed!" + address);
-                addressToDisplay = "<INVALID OR WATCH-ONLY ADDRESS> !!!";
-            }
-            // End of check for invalid/watch only addresses
-
-            final String confirmedBalance = this.cliBridge.getBalanceForAddress(address);
-            final String unconfirmedBalance = this.cliBridge.getUnconfirmedBalanceForAddress(address);
-            final boolean isConfirmed = (confirmedBalance.equals(unconfirmedBalance));
-            final String balanceToShow = df.format(Double.valueOf(isConfirmed ? confirmedBalance : unconfirmedBalance));
-
-            addressBalances[i++] = new String[]{
-                   balanceToShow,
-                   isConfirmed ? ("Yes  " + confirmed) : ("No  " + notConfirmed),
-                   addressToDisplay
-            };
+            addressBalances.add(getAddressBalanceDisplayData(address, watchOnlyOrInvalid));
         }
 
-        // BRX-TODO: Logic is duplicated here as just above, pull out?
+        // BRX-TODO: Logic is duplicated here as just above, merge?
         for (final String address : zAddresses) {
-            final String confirmedBalance = this.cliBridge.getBalanceForAddress(address);
-            final String unconfirmedBalance = this.cliBridge.getUnconfirmedBalanceForAddress(address);
-            final boolean isConfirmed = (confirmedBalance.equals(unconfirmedBalance));
-            final String balanceToShow = df.format(Double.valueOf(isConfirmed ? confirmedBalance : unconfirmedBalance));
-
-            addressBalances[i++] = new String[]{
-                    balanceToShow,
-                    isConfirmed ? ("Yes  " + confirmed) : ("No  " + notConfirmed),
-                    address
-            };
+            addressBalances.add(getAddressBalanceDisplayData(address, false));
         }
-        return addressBalances;
+        return (String[][])addressBalances.toArray();
     }
 }

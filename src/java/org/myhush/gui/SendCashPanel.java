@@ -6,6 +6,7 @@
 package org.myhush.gui;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -14,9 +15,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 class SendCashPanel extends WalletTabPanel {
     private final HushCommandLineBridge cliBridge;
@@ -473,47 +473,31 @@ class SendCashPanel extends WalletTabPanel {
     }
 
 
-    // BRX-TODO: See comment in AddressesPanel::getAddressBalanceDataFromWallet
     private String[][] getAddressPositiveBalanceDataFromWallet()
             throws HushCommandLineBridge.WalletCallException, IOException, InterruptedException {
         // Z Addresses - they are OK
         final String[] zAddresses = cliBridge.getWalletZAddresses();
 
-        // T Addresses created inside wallet that may be empty
-        final String[] tAddresses = this.cliBridge.getWalletAllPublicAddresses();
-        final Set<String> tStoredAddressSet = new HashSet<>();
-        Collections.addAll(tStoredAddressSet, tAddresses);
+        // T Addresses listed with the list received by addr comamnd
+        final String[] tAddresses = cliBridge.getWalletAllPublicAddresses();
 
-        // T addresses with unspent outputs (even if not GUI created)...
-        final String[] tAddressesWithUnspentOuts = this.cliBridge.getWalletPublicAddressesWithUnspentOutputs();
-        final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
-        Collections.addAll(tAddressSetWithUnspentOuts, tAddressesWithUnspentOuts);
+        // T addresses with unspent outputs - just in case they are different
+        final String[] tAddressesWithUnspentOuts = cliBridge.getWalletPublicAddressesWithUnspentOutputs();
 
-        // Combine all known T addresses
-        final Set<String> tAddressesCombined = new HashSet<>();
-        tAddressesCombined.addAll(tStoredAddressSet);
-        tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
+        // Store all known addresses
+        final java.util.List<String> allAddresses = new ArrayList<>(Arrays.asList(tAddresses));
+        allAddresses.addAll(Arrays.asList(tAddressesWithUnspentOuts));
+        allAddresses.addAll(Arrays.asList(zAddresses));
 
-        final String[][] tempAddressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
+        final List<String[]> addressBalances = new ArrayList<>();
 
-        int count = 0;
-
-        for (final String address : tAddressesCombined) {
-            final String balance = this.cliBridge.getBalanceForAddress(address);
+        for (final String address : allAddresses) {
+            final String balance = cliBridge.getBalanceForAddress(address);
             if (Double.valueOf(balance) > 0) {
-                tempAddressBalances[count++] = new String[]{ balance, address };
-            }
-        }
-        for (final String address : zAddresses) {
-            final String balance = this.cliBridge.getBalanceForAddress(address);
-            if (Double.valueOf(balance) > 0) {
-                tempAddressBalances[count++] = new String[]{ balance, address };
+                addressBalances.add(new String[]{ balance, address });
             }
         }
 
-        final String[][] addressBalances = new String[count][];
-        System.arraycopy(tempAddressBalances, 0, addressBalances, 0, count);
-
-        return addressBalances;
+        return (String[][])addressBalances.toArray();
     }
 }

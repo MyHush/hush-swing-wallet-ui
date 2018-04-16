@@ -20,9 +20,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class HushCommandLineBridge {
-    // BRX-TODO: Can be finalized by using Files.exists() below in constructor in place of `new File(...).exists()`
-    private File hushcli;
-    private File hushd;
+    private final File hushcli;
+    private final File hushd;
 
     public HushCommandLineBridge(final File installDirectory) throws IOException {
         // Detect daemon and client tools installation
@@ -42,14 +41,17 @@ public class HushCommandLineBridge {
         }
     }
 
-    public synchronized Process startDaemon() throws IOException {
+    public synchronized Process startDaemon(final boolean reindex) throws IOException {
         final String dataDirectory = App.PATH_PROVIDER.getBlockchainDirectory().getCanonicalPath();
-        final String[] args = new String[]{
+        final List<String> args = new ArrayList<>(Arrays.asList(
                 hushd.getCanonicalPath(),
                 wrapStringParameter(String.format("-datadir=%s", dataDirectory)),
                 wrapStringParameter(String.format("-exportdir=%s", dataDirectory))
-        };
-        return new CommandExecutor(args).startChildProcess();
+        ));
+        if (reindex) {
+            args.add(wrapStringParameter("-reindex"));
+        }
+        return new CommandExecutor((String[])args.toArray()).startChildProcess();
     }
 
     private CommandExecutor getCommandLineExecutor(final String[] args) throws IOException {
@@ -70,13 +72,18 @@ public class HushCommandLineBridge {
 
     public synchronized JsonObject getDaemonRawRuntimeInfo()
             throws IOException, InterruptedException, DaemonUnavailableException {
-        final String info = getCommandLineExecutor(new String[]{ "getinfo" }).execute();
+        final String info = getCommandLineExecutor(new String[]{ "getinfo" }).execute().trim();
+        final String normInfo = info.toLowerCase(Locale.ROOT);
 
-        if (info.trim().toLowerCase(Locale.ROOT).startsWith("error: couldn't connect to server")) {
-            throw new DaemonUnavailableException(info.trim());
+        if (normInfo.startsWith("error: couldn't connect to server")) {
+            throw new DaemonUnavailableException(info, DaemonUnavailableException.Reason.NOT_RUNNING);
+        } else if (normInfo.contains("error") && normInfo.contains("-reindex")) {
+            // this is a special case error for failure to load the block index when launching the daemon
+            // ": Error loading block database.\nPlease restart with -reindex to recover."
+            throw new DaemonUnavailableException(info, DaemonUnavailableException.Reason.START_FAILURE_REINDEX);
         }
 
-        if (info.trim().toLowerCase(Locale.ROOT).startsWith("error: ")) {
+        if (normInfo.startsWith("error: ")) {
             final String errorInfo = info.substring(7);
 
             try {
@@ -85,7 +92,7 @@ public class HushCommandLineBridge {
                 System.out.println("unexpected daemon info: " + errorInfo);
                 throw new IOException(e);
             }
-        } else if (info.trim().toLowerCase(Locale.ROOT).startsWith("error code:")) {
+        } else if (normInfo.startsWith("error code:")) {
             return jsonifyErrorMessage(info);
         } else {
             try {
@@ -803,9 +810,21 @@ public class HushCommandLineBridge {
         }
     }
 
-    class DaemonUnavailableException extends Exception {
-        DaemonUnavailableException(final String message) {
+    static class DaemonUnavailableException extends Exception {
+        public enum Reason {
+            NOT_RUNNING,
+            START_FAILURE_REINDEX
+        }
+
+        final Reason reason;
+
+        DaemonUnavailableException(final String message, final Reason reason) {
             super(message);
+            this.reason = reason;
+        }
+
+        public Reason getReason() {
+            return reason;
         }
     }
 }

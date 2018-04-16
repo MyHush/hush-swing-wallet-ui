@@ -159,10 +159,9 @@ public class App {
         }
         final File hushConfigFile = new File(blockchainDirectory, Constants.HUSH_CONFIG_FILENAME);
         if (!hushConfigFile.exists()) {
-            System.out.println(
-                    "HUSH configuration file " + hushConfigFile.getCanonicalPath() +
-                            " does not exist. It will be created with default settings."
-            );
+            final String userMessage = String.format("The HUSH daemon configuration file at \"%s\" does not exist. It will be created with default settings", hushConfigFile.getCanonicalPath());
+            System.out.println(userMessage);
+            JOptionPane.showMessageDialog(null, userMessage);
             final Random random = new Random(System.currentTimeMillis());
             final PrintStream configOut = new PrintStream(new FileOutputStream(hushConfigFile));
             configOut.println("#############################################################################");
