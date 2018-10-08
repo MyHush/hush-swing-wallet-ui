@@ -51,7 +51,8 @@ public class HushCommandLineBridge {
         if (reindex) {
             args.add(wrapStringParameter("-reindex"));
         }
-        return new CommandExecutor((String[])args.toArray()).startChildProcess();
+        String argsarray[] = new String[args.size()];
+        return new CommandExecutor(args.toArray(argsarray)).startChildProcess();
     }
 
     private CommandExecutor getCommandLineExecutor(final String[] args) throws IOException {

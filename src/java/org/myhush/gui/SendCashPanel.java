@@ -498,6 +498,7 @@ class SendCashPanel extends WalletTabPanel {
             }
         }
 
-        return (String[][])addressBalances.toArray();
+        String[][] array = new String[addressBalances.size()][];
+        return addressBalances.toArray(array);
     }
 }

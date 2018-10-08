@@ -305,6 +305,7 @@ class AddressesPanel extends WalletTabPanel {
         for (final String address : zAddresses) {
             addressBalances.add(getAddressBalanceDisplayData(address, false));
         }
-        return (String[][])addressBalances.toArray();
+        String[][] addarray = new String[addressBalances.size()][];
+        return addressBalances.toArray(addarray);
     }
 }
