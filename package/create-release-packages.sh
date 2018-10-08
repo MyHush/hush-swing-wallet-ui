@@ -46,7 +46,7 @@ rm -rf "${release_directory_path}"
 mkdir "${download_directory_path}"
 cd "${download_directory_path}"
 
-hush_binary_release_version="v1.0.13"
+hush_binary_release_version="v2.0.0"
 
 download_and_verify() {
     releases_path=$1
