@@ -296,7 +296,7 @@ class AddressesPanel extends WalletTabPanel {
             }
 
             final boolean watchOnlyOrInvalid = this.validationMap.get(address);
-            if (watchOnlyOrInvalid) {
+            if (!watchOnlyOrInvalid) {
                 addressBalances.add(getAddressBalanceDisplayData(address, watchOnlyOrInvalid));
             }
         }
