@@ -82,7 +82,7 @@ cd "${PROJECT_ROOT}"
 mkdir "${temporary_directory_path}"
 mkdir "${release_directory_path}"
 
-jar_release_verison="v0.71.3b"
+jar_release_verison="v0.72.1b"
 jar_file_name="HUSHSwingWalletUI.jar"
 
 ## Prepare Windows non-bundled zip release

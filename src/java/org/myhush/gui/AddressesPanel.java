@@ -282,22 +282,23 @@ class AddressesPanel extends WalletTabPanel {
                 final boolean validationResult = this.cliBridge.isWatchOnlyOrInvalidAddress(address);
                 this.validationMap.put(address, validationResult);
 
-                if (validationResult) {
-                    JOptionPane.showMessageDialog(
-                        this.parentFrame,
-                        "An invalid or watch-only address exists in the wallet:" + "\n" + address + "\n\n" +
-                        "The GUI wallet software cannot operate properly with addresses that are invalid or\n" +
-                        "exist in the wallet as watch-only addresses. Do NOT use this address as a destination\n" +
-                        "address for payment operations!",
-                        "Error: invalid or watch-only address exists!",
-                        JOptionPane.ERROR_MESSAGE
-                    );
-                }
+                // if (validationResult) {
+                //     JOptionPane.showMessageDialog(
+                //         this.parentFrame,
+                //         "An invalid or watch-only address exists in the wallet:" + "\n" + address + "\n\n" +
+                //         "The GUI wallet software cannot operate properly with addresses that are invalid or\n" +
+                //         "exist in the wallet as watch-only addresses. Do NOT use this address as a destination\n" +
+                //         "address for payment operations!",
+                //         "Error: invalid or watch-only address exists!",
+                //         JOptionPane.ERROR_MESSAGE
+                //     );
+                // }
             }
 
-            // BRX-TODO: Maybe just don't add invalid addresses?
             final boolean watchOnlyOrInvalid = this.validationMap.get(address);
-            addressBalances.add(getAddressBalanceDisplayData(address, watchOnlyOrInvalid));
+            if (watchOnlyOrInvalid) {
+                addressBalances.add(getAddressBalanceDisplayData(address, watchOnlyOrInvalid));
+            }
         }
 
         // BRX-TODO: Logic is duplicated here as just above, merge?

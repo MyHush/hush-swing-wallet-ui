@@ -21,8 +21,8 @@ import java.util.Date;
 import java.util.Random;
 
 public class App {
-    public static final String APP_VERSION_SHORT = "0.71.3b";
-    public static final String APP_VERSION_LONG  = "0.71.3 (beta)";
+    public static final String APP_VERSION_SHORT = "0.72.1b";
+    public static final String APP_VERSION_LONG  = "0.72.1 (beta)";
     public static final String APP_JAR_FILENAME  = "HUSHSwingWalletUI.jar";
 
     public static final PathProvider PATH_PROVIDER = RuntimeEnvironment.getPathProvider();
