@@ -266,13 +266,18 @@ class AddressesPanel extends WalletTabPanel {
 
         // T Addresses listed with the list received by addr comamnd
         final String[] tAddresses = cliBridge.getWalletAllPublicAddresses();
+        final Set<String> tStoredAddressSet = new HashSet<>();
+        Collections.addAll(tStoredAddressSet, tAddresses);
 
         // T addresses with unspent outputs - just in case they are different
         final String[] tAddressesWithUnspentOuts = cliBridge.getWalletPublicAddressesWithUnspentOutputs();
-
-        // Store all known T addresses
-        final List<String> tAddressesCombined = new ArrayList<>(Arrays.asList(tAddresses));
-        tAddressesCombined.addAll(Arrays.asList(tAddressesWithUnspentOuts));
+        final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
+        Collections.addAll(tAddressSetWithUnspentOuts, tAddressesWithUnspentOuts);
+        
+        // Combine all known T addresses
+        final Set<String> tAddressesCombined = new HashSet<>();
+        tAddressesCombined.addAll(tStoredAddressSet);
+        tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
 
         final List<String[]> addressBalances = new ArrayList<>();
 
@@ -301,7 +306,7 @@ class AddressesPanel extends WalletTabPanel {
             }
         }
 
-        // BRX-TODO: Logic is duplicated here as just above, merge?
+        // Z addresses can't be handled above as they will be flagged as invalid.
         for (final String address : zAddresses) {
             addressBalances.add(getAddressBalanceDisplayData(address, false));
         }
