@@ -40,6 +40,10 @@ class SendCashPanel extends WalletTabPanel {
     private String operationStatusID = null;
     private int operationStatusCounter = 0;
 
+    // Table of validated addresses with their validation result. An invalid or watch-only address should not be shown
+    // and should be remembered as invalid here
+    private final Map<String, Boolean> validationMap = new HashMap<>();
+
     SendCashPanel(final HushCommandLineBridge cliBridge, final StatusUpdateErrorReporter errorReporter) {
         this.cliBridge = cliBridge;
         this.errorReporter = errorReporter;
@@ -478,26 +482,48 @@ class SendCashPanel extends WalletTabPanel {
         // Z Addresses - they are OK
         final String[] zAddresses = cliBridge.getWalletZAddresses();
 
-        // T Addresses listed with the list received by addr comamnd
-        final String[] tAddresses = cliBridge.getWalletAllPublicAddresses();
+        // T Addresses created inside wallet that may be empty
+        final String[] tAddresses = this.cliBridge.getWalletAllPublicAddresses();
+        final Set<String> tStoredAddressSet = new HashSet<>();
+        Collections.addAll(tStoredAddressSet, tAddresses);
 
-        // T addresses with unspent outputs - just in case they are different
-        final String[] tAddressesWithUnspentOuts = cliBridge.getWalletPublicAddressesWithUnspentOutputs();
+        // T addresses with unspent outputs (even if not GUI created)...
+        final String[] tAddressesWithUnspentOuts = this.cliBridge.getWalletPublicAddressesWithUnspentOutputs();
+        final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
+        Collections.addAll(tAddressSetWithUnspentOuts, tAddressesWithUnspentOuts);
 
-        // Store all known addresses
-        final java.util.List<String> allAddresses = new ArrayList<>(Arrays.asList(tAddresses));
-        allAddresses.addAll(Arrays.asList(tAddressesWithUnspentOuts));
-        allAddresses.addAll(Arrays.asList(zAddresses));
+        // Combine all known addresses
+        final Set<String> allAddresses = new HashSet<>();
+        allAddresses.addAll(tStoredAddressSet);
+        allAddresses.addAll(tAddressSetWithUnspentOuts);
 
         final List<String[]> addressBalances = new ArrayList<>();
 
         for (final String address : allAddresses) {
-            final String balance = cliBridge.getBalanceForAddress(address);
+            // Make sure the current address is not watch-only or invalid
+            if (!this.validationMap.containsKey(address)) {
+                final boolean validationResult = this.cliBridge.isWatchOnlyOrInvalidAddress(address);
+                this.validationMap.put(address, validationResult);
+            }
+
+            final boolean watchOnlyOrInvalid = this.validationMap.get(address);
+            if (!watchOnlyOrInvalid) {
+                final String balance = cliBridge.getBalanceForAddress(address);
+                if (Double.valueOf(balance) > 0) {
+                    addressBalances.add(new String[]{ balance, address });
+                }
+            }
+        }
+        
+        // Z addresses can't be handled above as they will be flagged as invalid.
+        for (final String address : zAddresses) {
+            final String balance = this.cliBridge.getBalanceForAddress(address);
             if (Double.valueOf(balance) > 0) {
                 addressBalances.add(new String[]{ balance, address });
             }
         }
 
-        return (String[][])addressBalances.toArray();
+        String[][] array = new String[addressBalances.size()][];
+        return addressBalances.toArray(array);
     }
 }

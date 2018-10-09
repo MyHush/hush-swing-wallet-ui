@@ -46,7 +46,7 @@ rm -rf "${release_directory_path}"
 mkdir "${download_directory_path}"
 cd "${download_directory_path}"
 
-hush_binary_release_version="v1.0.13"
+hush_binary_release_version="v2.0.0"
 
 download_and_verify() {
     releases_path=$1
@@ -82,11 +82,12 @@ cd "${PROJECT_ROOT}"
 mkdir "${temporary_directory_path}"
 mkdir "${release_directory_path}"
 
-jar_release_verison="v0.71.3b"
+jar_release_verison="v0.72.2b"
 jar_file_name="HUSHSwingWalletUI.jar"
 
+
 ## Prepare Windows non-bundled zip release
-windows_release_package_name="hush-swing-${jar_release_verison}-hush-${hush_binary_release_version}--no-runtime--windows-x64"
+windows_release_package_name="hush-swing-${jar_release_verison}-hush-${hush_binary_release_version}-windows-x64"
 mkdir "${temporary_directory_path}/${windows_release_package_name}"
 unzip "${download_directory_path}/${windows_binaries_package}" -d "${temporary_directory_path}/${windows_release_package_name}"
 cp "package/supplemental-windows/reindex.bat" "${temporary_directory_path}/${windows_release_package_name}/"
@@ -102,42 +103,42 @@ sha256sum "${release_directory_path}/${windows_release_package_name}.zip" > "${r
 
 
 ## Prepare Windows runtime-bundled zip release
-windows_full_release_package_name="hush-swing-${jar_release_verison}-hush-${hush_binary_release_version}-windows-x64"
-mkdir "${temporary_directory_path}/${windows_full_release_package_name}"
-mkdir "${temporary_directory_path}/${windows_full_release_package_name}/app"
+#windows_full_release_package_name="hush-swing-${jar_release_verison}-hush-${hush_binary_release_version}-windows-x64"
+#mkdir "${temporary_directory_path}/${windows_full_release_package_name}"
+#mkdir "${temporary_directory_path}/${windows_full_release_package_name}/app"
 
 # Move our MSVC dependencies and `hush.exe` Java runtime loader, with it's `hush.cfg` file from their included archive
 # TODO: Eventually, avoid having this binary in this repository or as a hard-dependency at all
-unzip "package/supplemental-windows/hush-jruntime-bootstrapper-windows-x64.zip" -d "${temporary_directory_path}/${windows_full_release_package_name}/"
+#unzip "package/supplemental-windows/hush-jruntime-bootstrapper-windows-x64.zip" -d "${temporary_directory_path}/${windows_full_release_package_name}/"
 
-unzip "${download_directory_path}/${windows_binaries_package}" -d "${temporary_directory_path}/${windows_full_release_package_name}/app/"
-cp "package/supplemental-windows/reindex.bat" "${temporary_directory_path}/${windows_full_release_package_name}/app/"
-cp "${build_output_jars_path}/${jar_file_name}" "${temporary_directory_path}/${windows_full_release_package_name}/app/"
-cp LICENSE "${temporary_directory_path}/${windows_full_release_package_name}/LICENSE.txt"
+#unzip "${download_directory_path}/${windows_binaries_package}" -d "${temporary_directory_path}/${windows_full_release_package_name}/app/"
+#cp "package/supplemental-windows/reindex.bat" "${temporary_directory_path}/${windows_full_release_package_name}/app/"
+#cp "${build_output_jars_path}/${jar_file_name}" "${temporary_directory_path}/${windows_full_release_package_name}/app/"
+#cp LICENSE "${temporary_directory_path}/${windows_full_release_package_name}/LICENSE.txt"
 
 # Download Java SE JRE to be bundled
-java_runtime_binary_package_name="server-jre-8u162-windows-x64"
-wget --header "Cookie: oraclelicense=a" \
- "http://download.oracle.com/otn-pub/java/jdk/8u162-b12/0da788060d494f5095bf8624735fa2f1/${java_runtime_binary_package_name}.tar.gz" \
- -O "${download_directory_path}/${java_runtime_binary_package_name}.tar.gz"
-cp "package/supplemental-windows/${java_runtime_binary_package_name}.tar.gz.sha256" "${download_directory_path}/"
-cd "${download_directory_path}"
-sha256sum -c "${java_runtime_binary_package_name}.tar.gz.sha256"
-if [ "$?" != 0 ]; then
-    cleanup_and_err "Unable to verify SHA256 checksum for ${binary_package}";
-fi
-cd "${PROJECT_ROOT}"
+#java_runtime_binary_package_name="server-jre-8u162-windows-x64"
+#wget --header "Cookie: oraclelicense=a" \
+# "http://download.oracle.com/otn-pub/java/jdk/8u162-b12/0da788060d494f5095bf8624735fa2f1/${java_runtime_binary_package_name}.tar.gz" \
+# -O "${download_directory_path}/${java_runtime_binary_package_name}.tar.gz"
+#cp "package/supplemental-windows/${java_runtime_binary_package_name}.tar.gz.sha256" "${download_directory_path}/"
+#cd "${download_directory_path}"
+#sha256sum -c "${java_runtime_binary_package_name}.tar.gz.sha256"
+#if [ "$?" != 0 ]; then
+#    cleanup_and_err "Unable to verify SHA256 checksum for ${binary_package}";
+#fi
+#cd "${PROJECT_ROOT}"
 
 # Move only the 'runtime' folder from the JRE distribution to be included in our release
-mkdir "${temporary_directory_path}/${java_runtime_binary_package_name}"
-tar -xzvf "${download_directory_path}/${java_runtime_binary_package_name}.tar.gz" -C "${temporary_directory_path}/${java_runtime_binary_package_name}"
-cp -r "${temporary_directory_path}/${java_runtime_binary_package_name}/jdk1.8.0_162/jre" "${temporary_directory_path}/${windows_full_release_package_name}/runtime"
+#mkdir "${temporary_directory_path}/${java_runtime_binary_package_name}"
+#tar -xzvf "${download_directory_path}/${java_runtime_binary_package_name}.tar.gz" -C "${temporary_directory_path}/${java_runtime_binary_package_name}"
+#cp -r "${temporary_directory_path}/${java_runtime_binary_package_name}/jdk1.8.0_162/jre" "${temporary_directory_path}/${windows_full_release_package_name}/runtime"
 
 # Make release file
-cd "${temporary_directory_path}/${windows_full_release_package_name}"
-zip -9r "${PROJECT_ROOT}/${release_directory_path}/${windows_full_release_package_name}.zip" *
-cd "${PROJECT_ROOT}"
-sha256sum "${release_directory_path}/${windows_full_release_package_name}.zip" > "${release_directory_path}/${windows_full_release_package_name}.zip.sha256"
+#cd "${temporary_directory_path}/${windows_full_release_package_name}"
+#zip -9r "${PROJECT_ROOT}/${release_directory_path}/${windows_full_release_package_name}.zip" *
+#cd "${PROJECT_ROOT}"
+#sha256sum "${release_directory_path}/${windows_full_release_package_name}.zip" > "${release_directory_path}/${windows_full_release_package_name}.zip.sha256"
 
 
 ## Prepare Mac OS non-bundled zip release

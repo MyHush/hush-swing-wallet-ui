@@ -35,10 +35,10 @@
 
     <target name="compile">
         <mkdir dir="${classes.dir}"/>
-        <javac srcdir="${ext.dir}" destdir="${classes.dir}" debug="on">
+        <javac srcdir="${ext.dir}" destdir="${classes.dir}" debug="on" release="8">
             <classpath refid="main-classpath"/>
         </javac>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="on">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="on" release="8">
             <classpath refid="main-classpath"/>
         </javac>
     </target>

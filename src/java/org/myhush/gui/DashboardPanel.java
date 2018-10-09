@@ -479,6 +479,7 @@ class DashboardPanel extends WalletTabPanel {
                 System.out.println("Error occurred while formatting confirmations: " + transaction[2] + " - " + e.getMessage() + "!");
             }
         }
-        return (String[][])transactions.toArray();
+        String[][] array = new String[transactions.size()][];
+        return transactions.toArray(array);
     }
 }
